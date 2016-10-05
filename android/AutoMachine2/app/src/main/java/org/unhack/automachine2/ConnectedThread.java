@@ -28,12 +28,14 @@ public class ConnectedThread extends Thread {
     private final static int SOFLEN = 35;
     private Context mContext;
     private boolean running = true;
+    private CommandProcessor cmdProcessor;
     public controlMessage message;
     public ConnectedThread(BluetoothSocket socket, Context context) {
         mContext = context;
         mmSocket = socket;
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
+        cmdProcessor = new CommandProcessor(mContext);
 
         // Get the input and output streams, using temp objects because
         // member streams are final
@@ -109,31 +111,17 @@ public class ConnectedThread extends Thread {
                     //Log.d("String Paylod", string_payload);
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
                     ioTextInten.putExtra("payload", string_payload);
-                    //PRIBITO GVOZDIAMY (tm)
-                    //Hardcoded poweramp api calls for testing
-                    if (message.getCanAddress() == 0x21f){
-                        switch (message.getCanPayload(0).byteAt(0)){
-                            case 2:
-                                mContext.startService(new Intent(PowerampAPI.ACTION_API_COMMAND).putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.TOGGLE_PLAY_PAUSE).setPackage(PowerampAPI.PACKAGE_NAME));
-                                break;
-
-                            case (byte)128:
-                                mContext.startService(new Intent(PowerampAPI.ACTION_API_COMMAND).putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.NEXT).setPackage(PowerampAPI.PACKAGE_NAME));
-                                break;
-                            case 64:
-                                mContext.startService(new Intent(PowerampAPI.ACTION_API_COMMAND).putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.PREVIOUS).setPackage(PowerampAPI.PACKAGE_NAME));
-                                break;
-                        }
-                    }
-
-
+                    //push command to command processor
+                    cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
                     mContext.sendBroadcast(ioTextInten);
-
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 } catch (IndexOutOfBoundsException e){
                     e.printStackTrace();
                 }
+
+                //house keeping routine to reset command states and counts
+                cmdProcessor.houseKeeping();
 
             } catch (IOException e) {
                 e.printStackTrace();
