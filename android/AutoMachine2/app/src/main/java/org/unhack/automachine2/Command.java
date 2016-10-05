@@ -72,9 +72,10 @@ public class Command {
         }
         if (status == SHORT_PRESS){
             if (System.currentTimeMillis() - timer < THRESHOLD && isReal) {
-                if (this.count == 2) {
+                if (this.count <= 2) {
                     //Not long press
                     Log.d("SOME TAG", "DO NOTHING");
+                    this.timer = System.currentTimeMillis();
                 } else {
                     //Long press
                     if (longPressedIntent != null) mContext.startService(longPressedIntent);
@@ -83,10 +84,13 @@ public class Command {
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
                     ioTextInten.putExtra("payload", string_payload + " fired LONG \n");
                     mContext.sendBroadcast(ioTextInten);
+                    ///
+                    this.timer = System.currentTimeMillis();
+                    //
                 }
             }
             else {
-                if (System.currentTimeMillis() - timer > THRESHOLD && isReal) {
+                if (System.currentTimeMillis() - timer > THRESHOLD) {
                     //go out from SHORT state
                     mContext.startService(shortPressedIntent);
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
