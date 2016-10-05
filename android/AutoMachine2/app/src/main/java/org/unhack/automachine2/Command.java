@@ -60,22 +60,24 @@ public class Command {
         return this.payload;
     }
 
-    public  void fire(boolean isReal){
-        if (isReal) this.count++;
+    public synchronized void  fire(boolean isReal){
+        if (isReal) {
+            this.count++;
+            this.timer = System.currentTimeMillis();
+        }
         //released and first fire
         if (status == RELEASED && isReal) {
+            Log.d("SOME TAG", "TAG 1");
             //first time firinng
             //fire up timer
-            this.timer = System.currentTimeMillis();
             this.status = SHORT_PRESS;
             return;
         }
-        if (status == SHORT_PRESS){
-            if (System.currentTimeMillis() - timer < THRESHOLD && isReal) {
+        if (status == SHORT_PRESS  && isReal){
+            if (System.currentTimeMillis() - timer < THRESHOLD) {
                 if (this.count <= 2) {
                     //Not long press
-                    Log.d("SOME TAG", "DO NOTHING");
-                    this.timer = System.currentTimeMillis();
+                    return;
                 } else {
                     //Long press
                     if (longPressedIntent != null) mContext.startService(longPressedIntent);
@@ -84,29 +86,18 @@ public class Command {
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
                     ioTextInten.putExtra("payload", string_payload + " fired LONG \n");
                     mContext.sendBroadcast(ioTextInten);
-                    ///
-                    this.timer = System.currentTimeMillis();
+                    return;
                     //
-                }
-            }
-            else {
-                if (System.currentTimeMillis() - timer > THRESHOLD) {
-                    //go out from SHORT state
-                    mContext.startService(shortPressedIntent);
-                    Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
-                    ioTextInten.putExtra("payload", string_payload + " fired SHORT \n");
-                    mContext.sendBroadcast(ioTextInten);
-                    this.status = RELEASED;
-                    this.count = 0;
                 }
             }
         }
         if (status == LONG_PRESS){
-            if (System.currentTimeMillis() - timer < THRESHOLD && isReal){
+            Log.d("SOME TAG", "TAG 5");
+            if (System.currentTimeMillis() - timer < THRESHOLD){
                 //Do nothing, still oin long press
+
             }
             else {
-
                 this.status = RELEASED;
                 this.count = 0;
                 if (longReleasedIntent != null) mContext.startService(longReleasedIntent);
@@ -115,6 +106,15 @@ public class Command {
                 mContext.sendBroadcast(ioTextInten);
             }
         }
+        if (status == SHORT_PRESS && System.currentTimeMillis() - timer > THRESHOLD){
+            mContext.startService(shortPressedIntent);
+            Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
+            ioTextInten.putExtra("payload", string_payload + " fired SHORT \n");
+            mContext.sendBroadcast(ioTextInten);
+            this.status = RELEASED;
+            this.count = 0;
+        }
+
     }
 }
 

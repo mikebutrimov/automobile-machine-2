@@ -28,6 +28,7 @@ public class ConnectedThread extends Thread {
     private final static int SOFLEN = 35;
     private Context mContext;
     private boolean running = true;
+    private boolean housekeeping = true;
     private CommandProcessor cmdProcessor;
     public controlMessage message;
     public ConnectedThread(BluetoothSocket socket, Context context) {
@@ -55,6 +56,22 @@ public class ConnectedThread extends Thread {
         // Keep listening to the InputStream until an exception occurs
         while (running) {
             try {
+                //start housekeeping thread
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (housekeeping){
+                            cmdProcessor.houseKeeping();
+                            try {
+                                sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }).start();
+
+
                 // Read from the InputStream
                 byte[] control = new byte[1];
                 Boolean read = true;
@@ -68,7 +85,7 @@ public class ConnectedThread extends Thread {
                 read_count = 0;
                 int messageLen = 0;
                 while (read){
-                    cmdProcessor.houseKeeping();
+
                     mmInStream.read(control,0,1);
                     int byte_readed = (int)(control[0]);
                     //Log.d("LOOP VARS","BYTE: "+ String.valueOf(byte_readed) + " ZEROS: "
@@ -167,6 +184,7 @@ public class ConnectedThread extends Thread {
     public void halt(){
         Log.d("CONNECTED","Halting connection thread");
         this.running = false;
+        this.housekeeping = false;
         cancel();
     }
 
