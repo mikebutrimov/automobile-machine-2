@@ -68,6 +68,7 @@ public class ConnectedThread extends Thread {
                 read_count = 0;
                 int messageLen = 0;
                 while (read){
+                    cmdProcessor.houseKeeping();
                     mmInStream.read(control,0,1);
                     int byte_readed = (int)(control[0]);
                     //Log.d("LOOP VARS","BYTE: "+ String.valueOf(byte_readed) + " ZEROS: "
@@ -101,19 +102,19 @@ public class ConnectedThread extends Thread {
                 }
                 try {
                     message = controlMessage.parseFrom(mPayload);
-                    //Log.d("PROTOBUF", message.toString());
+                    Log.d("PROTOBUF", message.toString());
                     int can_address = message.getCanAddress();
-                    String string_payload = String.valueOf(can_address);
+                    /*String string_payload = String.valueOf(can_address);
                     for (int i = 0; i < message.getCanPayload(0).size(); i++) {
                         string_payload = string_payload + " " + String.valueOf(message.getCanPayload(0).byteAt(i));
                     }
                     string_payload = string_payload + "\n";
                     //Log.d("String Paylod", string_payload);
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
-                    ioTextInten.putExtra("payload", string_payload);
+                    ioTextInten.putExtra("payload", string_payload);*/
                     //push command to command processor
                     cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
-                    mContext.sendBroadcast(ioTextInten);
+                    //mContext.sendBroadcast(ioTextInten);
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
                 } catch (IndexOutOfBoundsException e){
@@ -121,7 +122,7 @@ public class ConnectedThread extends Thread {
                 }
 
                 //house keeping routine to reset command states and counts
-                cmdProcessor.houseKeeping();
+
 
             } catch (IOException e) {
                 e.printStackTrace();
