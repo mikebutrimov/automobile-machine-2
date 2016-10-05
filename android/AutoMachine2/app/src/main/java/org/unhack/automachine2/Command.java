@@ -14,6 +14,7 @@ public class Command {
     private static final int SHORT_PRESS = 541;
     private static final int LONG_PRESS = 916;
     private static final int RELEASED = 619;
+    private static final int P_NUMBER_FOR_SHORT_PRESS = 3;
     private int address;
     private byte[] payload;
     private int status = RELEASED;
@@ -75,7 +76,7 @@ public class Command {
         }
         if (status == SHORT_PRESS  && isReal){
             if (System.currentTimeMillis() - timer < THRESHOLD) {
-                if (this.count <= 2) {
+                if (this.count <= P_NUMBER_FOR_SHORT_PRESS) {
                     //Not long press
                     return;
                 } else {
@@ -92,10 +93,8 @@ public class Command {
             }
         }
         if (status == LONG_PRESS){
-            Log.d("SOME TAG", "TAG 5");
             if (System.currentTimeMillis() - timer < THRESHOLD){
                 //Do nothing, still oin long press
-
             }
             else {
                 this.status = RELEASED;
