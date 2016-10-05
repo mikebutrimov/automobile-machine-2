@@ -25,7 +25,7 @@ public class Command {
     private Context mContext;
     private  int count = 0;
     private String string_payload;
-    private static final int THRESHOLD = 110;
+    private static final int THRESHOLD = 150;
 
     public Command(int addr, byte[] pld, Intent shortPressedIntent, Context context){
         this.address  = addr;
@@ -68,7 +68,6 @@ public class Command {
         }
         //released and first fire
         if (status == RELEASED && isReal) {
-            Log.d("SOME TAG", "TAG 1");
             //first time firinng
             //fire up timer
             this.status = SHORT_PRESS;

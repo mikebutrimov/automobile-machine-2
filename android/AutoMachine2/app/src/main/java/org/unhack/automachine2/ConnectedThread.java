@@ -29,14 +29,14 @@ public class ConnectedThread extends Thread {
     private Context mContext;
     private boolean running = true;
     private boolean housekeeping = true;
-    private CommandProcessor cmdProcessor;
+    private final CommandProcessor cmdProcessor;
     public controlMessage message;
     public ConnectedThread(BluetoothSocket socket, Context context) {
         mContext = context;
         mmSocket = socket;
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
-        cmdProcessor = new CommandProcessor(mContext);
+        this.cmdProcessor = new CommandProcessor(mContext);
 
         // Get the input and output streams, using temp objects because
         // member streams are final
@@ -53,25 +53,23 @@ public class ConnectedThread extends Thread {
         Log.d("CONNECTED Thread", "In Run");
         byte[] buffer = new byte[1024];  // buffer store for the stream
         int bytes; // bytes returned from read()
+        //start housekeeping thread
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (housekeeping){
+                    cmdProcessor.houseKeeping();
+                    try {
+                        sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
         // Keep listening to the InputStream until an exception occurs
         while (running) {
             try {
-                //start housekeeping thread
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (housekeeping){
-                            cmdProcessor.houseKeeping();
-                            try {
-                                sleep(100);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }).start();
-
-
                 // Read from the InputStream
                 byte[] control = new byte[1];
                 Boolean read = true;
@@ -130,7 +128,7 @@ public class ConnectedThread extends Thread {
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
                     ioTextInten.putExtra("payload", string_payload);*/
                     //push command to command processor
-                    cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
+                    //cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
                     //mContext.sendBroadcast(ioTextInten);
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();
@@ -138,7 +136,7 @@ public class ConnectedThread extends Thread {
                     e.printStackTrace();
                 }
 
-                //house keeping routine to reset command states and counts
+
 
 
             } catch (IOException e) {

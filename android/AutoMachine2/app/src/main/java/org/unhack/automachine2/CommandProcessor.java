@@ -52,7 +52,6 @@ public class CommandProcessor {
     //very very rude idea
     //hashmap is better, but i must thinkout uniqe keys to commands
     public synchronized void fireCommand(int address, byte[] payload){
-
         for (Command cmd: this.commands){
             if (cmd.getAddress() == address && Arrays.equals(cmd.getPayload(), payload)){
                 //here we are

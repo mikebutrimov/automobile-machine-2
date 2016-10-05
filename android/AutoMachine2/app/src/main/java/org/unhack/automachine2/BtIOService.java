@@ -56,13 +56,11 @@ public class BtIOService extends Service {
         return START_STICKY;
     }
 
-
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
-
 
 
     public BluetoothDevice getBtDeviceFromName(String devName){
