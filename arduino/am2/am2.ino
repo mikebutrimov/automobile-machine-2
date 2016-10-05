@@ -241,6 +241,35 @@ void readCan(){
   }
 }
 
+void testReadCan(){
+  //read data from CAN Bus
+  unsigned char len = 3;
+  unsigned char can_buf[3]= {64,0,0}; 
+  int canId = 0x21f;
+  if(true){
+    if (canId == 0x21f && len != 0){
+      uint8_t buffer[64];
+      size_t message_length;
+      bool status;
+      pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+      controlMessage message = controlMessage_init_zero;
+      message.can_address = canId;
+      message.can_payload[0].size = len;
+      for (int i = 0; i < len; i++){
+        message.can_payload[0].bytes[i] = can_buf[i];
+      }
+      message.can_payload_count = 1;
+      status = pb_encode(&stream, controlMessage_fields, &message);
+      sop[SOPLEN-1] = stream.bytes_written;
+
+      Serial1.write(sop,SOPLEN);
+      Serial1.write(buffer,stream.bytes_written);
+      Serial.println("Test packet was send");
+    }
+  }
+}
+
+
 
 
  
@@ -294,6 +323,5 @@ void loop() {
     readyForNext = 1;
   }
   readCan();
-  readOrder();
-  
+  readOrder(); 
 }
