@@ -1,0 +1,164 @@
+[
+    {
+        "outputFile": "/home/unhack/Projects/AutoMachine2/poweramp_api_lib/build/intermediates/incremental/mergeDebugAndroidTestResources/merged.dir/values/values.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 57,
+                    "endOffset": 108
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/AutoMachine2/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 2,
+                        "startColumn": 4,
+                        "startOffset": 55,
+                        "endColumn": 57,
+                        "endOffset": 108
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 3,
+                    "startColumn": 4,
+                    "startOffset": 113,
+                    "endColumn": 43,
+                    "endOffset": 152
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/AutoMachine2/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 3,
+                        "startColumn": 4,
+                        "startOffset": 113,
+                        "endColumn": 43,
+                        "endOffset": 152
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 4,
+                    "startColumn": 4,
+                    "startOffset": 157,
+                    "endColumn": 60,
+                    "endOffset": 213
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/AutoMachine2/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 4,
+                        "startColumn": 4,
+                        "startOffset": 157,
+                        "endColumn": 60,
+                        "endOffset": 213
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 5,
+                    "startColumn": 4,
+                    "startOffset": 218,
+                    "endColumn": 62,
+                    "endOffset": 276
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/AutoMachine2/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 5,
+                        "startColumn": 4,
+                        "startOffset": 218,
+                        "endColumn": 62,
+                        "endOffset": 276
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "outputFile": "/home/unhack/Projects/automobile-machine/project_am_tests_android/poweramp_api_lib/build/intermediates/incremental/mergeDebugAndroidTestResources/merged.dir/values/values.xml",
+        "map": [
+            {
+                "to": {
+                    "startLine": 2,
+                    "startColumn": 4,
+                    "startOffset": 55,
+                    "endColumn": 57,
+                    "endOffset": 108
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/automobile-machine/project_am_tests_android/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 2,
+                        "startColumn": 4,
+                        "startOffset": 55,
+                        "endColumn": 57,
+                        "endOffset": 108
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 3,
+                    "startColumn": 4,
+                    "startOffset": 113,
+                    "endColumn": 43,
+                    "endOffset": 152
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/automobile-machine/project_am_tests_android/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 3,
+                        "startColumn": 4,
+                        "startOffset": 113,
+                        "endColumn": 43,
+                        "endOffset": 152
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 4,
+                    "startColumn": 4,
+                    "startOffset": 157,
+                    "endColumn": 60,
+                    "endOffset": 213
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/automobile-machine/project_am_tests_android/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 4,
+                        "startColumn": 4,
+                        "startOffset": 157,
+                        "endColumn": 60,
+                        "endOffset": 213
+                    }
+                }
+            },
+            {
+                "to": {
+                    "startLine": 5,
+                    "startColumn": 4,
+                    "startOffset": 218,
+                    "endColumn": 62,
+                    "endOffset": 276
+                },
+                "from": {
+                    "file": "/home/unhack/Projects/automobile-machine/project_am_tests_android/poweramp_api_lib/build/intermediates/bundles/debug/res/values/values.xml",
+                    "position": {
+                        "startLine": 5,
+                        "startColumn": 4,
+                        "startOffset": 218,
+                        "endColumn": 62,
+                        "endOffset": 276
+                    }
+                }
+            }
+        ]
+    }
+]

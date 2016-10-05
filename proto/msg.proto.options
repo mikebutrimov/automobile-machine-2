@@ -1,0 +1,2 @@
+controlMessage.can_payload max_size:8;
+controlMessage.can_payload max_count:3;

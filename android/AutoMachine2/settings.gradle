@@ -1,0 +1,1 @@
+include ':app', ':protobuf-java-3.0.0', ':poweramp_api_lib'

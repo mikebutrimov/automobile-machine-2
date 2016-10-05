@@ -1,0 +1,5 @@
+syntax = "proto2";
+message controlMessage{
+    required int32 can_address = 1;
+    repeated bytes can_payload = 2;
+}
