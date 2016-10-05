@@ -9,7 +9,7 @@ byte bits = 0;
 const char BYTES = 8;
 const int bytes = 11;
 const byte FFBYTES[8] = {255,255,255,255,255,255,255,255};
-
+long timer = 0;
 byte sop[35];
 
 byte byte_val = 0;
@@ -220,7 +220,7 @@ void readCan(){
   if(CAN_MSGAVAIL == CAN.checkReceive()){
     CAN.readMsgBuf(&len, can_buf);
     canId = (int) CAN.getCanId();
-    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f && len != 0){
+    if (canId == 0x21f && len != 0){
       uint8_t buffer[64];
       size_t message_length;
       bool status;
@@ -234,10 +234,9 @@ void readCan(){
       message.can_payload_count = 1;
       status = pb_encode(&stream, controlMessage_fields, &message);
       sop[SOPLEN-1] = stream.bytes_written;
-      //proto send
+
       Serial1.write(sop,SOPLEN);
       Serial1.write(buffer,stream.bytes_written);
-      //Serial.println(stream.bytes_written);
     }
   }
 }

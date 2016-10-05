@@ -103,7 +103,7 @@ public class ConnectedThread extends Thread {
                     int can_address = message.getCanAddress();
                     String string_payload = String.valueOf(can_address);
                     for (int i = 0; i < message.getCanPayload(0).size(); i++) {
-                        string_payload = string_payload + " " + String.valueOf((int) message.getCanPayload(0).byteAt(i));
+                        string_payload = string_payload + " " + String.valueOf(message.getCanPayload(0).byteAt(i));
                     }
                     string_payload = string_payload + "\n";
                     //Log.d("String Paylod", string_payload);
@@ -112,12 +112,12 @@ public class ConnectedThread extends Thread {
                     //PRIBITO GVOZDIAMY (tm)
                     //Hardcoded poweramp api calls for testing
                     if (message.getCanAddress() == 0x21f){
-                        switch ((int)message.getCanPayload(0).byteAt(0)){
+                        switch (message.getCanPayload(0).byteAt(0)){
                             case 2:
                                 mContext.startService(new Intent(PowerampAPI.ACTION_API_COMMAND).putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.TOGGLE_PLAY_PAUSE).setPackage(PowerampAPI.PACKAGE_NAME));
                                 break;
 
-                            case 128:
+                            case (byte)128:
                                 mContext.startService(new Intent(PowerampAPI.ACTION_API_COMMAND).putExtra(PowerampAPI.COMMAND, PowerampAPI.Commands.NEXT).setPackage(PowerampAPI.PACKAGE_NAME));
                                 break;
                             case 64:
