@@ -7,14 +7,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+
+import com.maxmpz.poweramp.player.PowerampAPI;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 
+import static android.content.ContentValues.TAG;
 import static org.unhack.automachine2.MainActivity.currentBtDevice;
 
 public class BtIOService extends Service {
@@ -23,6 +27,8 @@ public class BtIOService extends Service {
     public BluetoothAdapter mBluetoothAdapter;
     public ConnectThread connect;
     public VehicleControlThread mVehicleControlThread;
+    private Intent mTrackIntent;
+    private Bundle mCurrentTrack;
     public BtIOService() {
     }
 
@@ -55,6 +61,16 @@ public class BtIOService extends Service {
             Log.d("THREADNULL", "Thread toString" + connect.getConnectedThread().toString());
             mVehicleControlThread = new VehicleControlThread(getApplicationContext(),connect.getConnectedThread());
             mVehicleControlThread.start();
+            registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
+        }
+    };
+
+    private BroadcastReceiver mTrackReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mTrackIntent = intent;
+            processTrackIntent();
+            Log.w(TAG, "mTrackReceiver " + intent);
         }
     };
 
@@ -64,6 +80,7 @@ public class BtIOService extends Service {
     public void onCreate() {
         registerReceiver(mCommandReceiver,new IntentFilter(MainActivity.INTENT_FILTER_INPUT_COMMAND));
         registerReceiver(mConnectedThreadIsReady, new IntentFilter(MainActivity.INTENT_FILTER_CONNECTEDTHREAD_READY));
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Log.d("BT DEVICE", currentBtDevice + " is Selected");
         if (!currentBtDevice.isEmpty()) {
@@ -131,7 +148,78 @@ public class BtIOService extends Service {
         }
         unregisterReceiver(mCommandReceiver);
         unregisterReceiver(mConnectedThreadIsReady);
+        unregisterReceiver(mTrackReceiver);
         super.onDestroy();
     }
 
+    //user functions
+    private void processTrackIntent() {
+        mCurrentTrack = null;
+        if(mTrackIntent != null) {
+            mCurrentTrack = mTrackIntent.getBundleExtra(PowerampAPI.TRACK);
+            if(mCurrentTrack != null) {
+                int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
+                String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
+                String album = mCurrentTrack.getString(PowerampAPI.Track.ALBUM);
+                String title = mCurrentTrack.getString(PowerampAPI.Track.TITLE);
+                Log.d("POWERAMP!", " " + artist + album + title);
+                //HARDCODED
+                //PRIBITO GVOZDIAMY (tm)
+
+                byte[] b_artist = new byte[8];
+                b_artist[0] = (byte) 0x21;
+                byte[] b_album = new byte[8];
+                b_album[0] = 0x22;
+                byte[] b_title = new byte[8];
+                b_title[0] = (byte) 0x23;
+                for (int i = 1; i < 8; i++){
+                    try {
+                        b_artist[i] = (byte) artist.charAt(i);
+                        b_album[i] = (byte) album.charAt(i);
+                        b_title[i] = (byte) title.charAt(i);
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                        //FIDO in a sake of debugging
+                    }
+                }
+
+                int can_address = 0xa4;
+                byte[] pld0 = new byte[] {0x04,0,0,0,0x02};
+                byte[] pld1 = new byte[] {0x10,0x59,0x58,0x57,0,0,0,0};
+                Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                cmdUpIntent.putExtra("address", can_address);
+                cmdUpIntent.putExtra("repeat",false);
+                cmdUpIntent.putExtra("interval",0);
+                ArrayList payload = new ArrayList();
+                payload.add(pld0);
+                payload.add(pld1);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+
+                cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                cmdUpIntent.putExtra("address", can_address);
+                cmdUpIntent.putExtra("repeat",false);
+                cmdUpIntent.putExtra("interval",0);
+                payload = new ArrayList();
+                payload.add(b_artist);
+                payload.add(b_album);
+                payload.add(b_title);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+                pld0 = new byte[] {0x25,0,0,0,0,0,0,0};
+                pld1 = new byte[] {0x26,0,0,0};
+                cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                cmdUpIntent.putExtra("address", can_address);
+                cmdUpIntent.putExtra("repeat",false);
+                cmdUpIntent.putExtra("interval",0);
+                payload = new ArrayList();
+                payload.add(pld0);
+                payload.add(pld1);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+
+            }
+        }
+    }
 }
