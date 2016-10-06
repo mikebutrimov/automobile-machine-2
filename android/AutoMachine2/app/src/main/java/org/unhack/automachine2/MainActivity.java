@@ -184,11 +184,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.button_hu:
                     can_address = 0x165;
-                    pld = new byte[] {(byte)200,(byte)192,16,0};
+                    pld = new byte[] {(byte)200,(byte)192,32,0};
                     Intent cmdHUonIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                     cmdHUonIntent.putExtra("address", can_address);
                     cmdHUonIntent.putExtra("repeat",true);
-                    cmdHUonIntent.putExtra("interval",250);
+                    cmdHUonIntent.putExtra("interval",100);
                     payload = new ArrayList();
                     payload.add(pld);
                     cmdHUonIntent.putParcelableArrayListExtra("payload", payload);
@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case R.id.button_huoff:
                     can_address = 0x165;
-                    pld = new byte[] {(byte)200,(byte)192,16,0};
+                    pld = new byte[] {(byte)200,(byte)192,32,0};
                     Intent cmdHUoffIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                     cmdHUoffIntent.putExtra("address", can_address);
                     cmdHUoffIntent.putExtra("repeat",true);

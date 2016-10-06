@@ -131,7 +131,7 @@ public class ConnectedThread extends Thread {
                     Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
                     ioTextInten.putExtra("payload", string_payload);*/
                     //push command to command processor
-                    //cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
+                    cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
                     //mContext.sendBroadcast(ioTextInten);
                 } catch (InvalidProtocolBufferException e) {
                     e.printStackTrace();

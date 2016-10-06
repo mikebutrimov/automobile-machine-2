@@ -70,11 +70,6 @@ public class VehicleControlThread extends Thread {
         while (running) {
             processQueue();
             removeFiredCommands();
-            try {
-                sleep(100); // why not?
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
     }
 
