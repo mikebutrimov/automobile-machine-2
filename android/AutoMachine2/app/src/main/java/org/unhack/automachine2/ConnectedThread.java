@@ -16,6 +16,8 @@ import java.io.OutputStream;
 import org.unhack.automachine2.Msg.controlMessage;
 import com.maxmpz.poweramp.player.PowerampAPI;
 
+import static org.unhack.automachine2.MainActivity.INTENT_FILTER_CONNECTEDTHREAD_READY;
+
 /**
  * Created by unhack on 10/1/16.
  */
@@ -51,6 +53,7 @@ public class ConnectedThread extends Thread {
 
     public void run() {
         Log.d("CONNECTED Thread", "In Run");
+        //send broadcast that we are ready
         byte[] buffer = new byte[1024];  // buffer store for the stream
         int bytes; // bytes returned from read()
         //start housekeeping thread

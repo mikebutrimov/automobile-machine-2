@@ -4,10 +4,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import java.io.IOException;
 import java.util.UUID;
+
+import static org.unhack.automachine2.MainActivity.INTENT_FILTER_CONNECTEDTHREAD_READY;
 
 public class ConnectThread extends Thread {
     private final BluetoothSocket mmSocket;
@@ -50,8 +53,9 @@ public class ConnectThread extends Thread {
         // Do work to manage the connection (in a separate thread)
         //manageConnectedSocket(mmSocket);
         mConnectedThread = new ConnectedThread(mmSocket, mContext);
+        Intent connectedThreadIsReadyIntent = new Intent(INTENT_FILTER_CONNECTEDTHREAD_READY);
+        mContext.sendBroadcast(connectedThreadIsReadyIntent);
         mConnectedThread.start();
-
     }
 
     /** Will cancel an in-progress connection, and close the socket */
@@ -61,9 +65,8 @@ public class ConnectThread extends Thread {
         } catch (IOException e) { }
     }
 
-    public ConnectedThread getmConnectedThread(){
+    public ConnectedThread getConnectedThread(){
         return this.mConnectedThread;
     }
-
 
 }

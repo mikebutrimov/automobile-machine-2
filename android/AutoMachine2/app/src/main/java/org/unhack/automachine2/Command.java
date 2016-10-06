@@ -83,7 +83,7 @@ public class Command {
                     if (longPressedIntent != null) mContext.startService(longPressedIntent);
                     this.status = LONG_PRESS;
                     this.timer = System.currentTimeMillis();
-                    Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
+                    Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER_UPDATE_UI);
                     ioTextInten.putExtra("payload", string_payload + " fired LONG \n");
                     mContext.sendBroadcast(ioTextInten);
                     return;
@@ -99,14 +99,14 @@ public class Command {
                 this.status = RELEASED;
                 this.count = 0;
                 if (longReleasedIntent != null) mContext.startService(longReleasedIntent);
-                Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
+                Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER_UPDATE_UI);
                 ioTextInten.putExtra("payload", string_payload + " released LONG \n");
                 mContext.sendBroadcast(ioTextInten);
             }
         }
         if (status == SHORT_PRESS && System.currentTimeMillis() - timer > THRESHOLD){
             mContext.startService(shortPressedIntent);
-            Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER);
+            Intent ioTextInten = new Intent(MainActivity.INTENT_FILTER_UPDATE_UI);
             ioTextInten.putExtra("payload", string_payload + " fired SHORT \n");
             mContext.sendBroadcast(ioTextInten);
             this.status = RELEASED;

@@ -27,16 +27,20 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     public int REQUEST_ENABLE_BT = 1;
-    public static final String INTENT_FILTER = "org.unhack.automachine2.BROADCAST_FILTER";
+    public static final String INTENT_FILTER_UPDATE_UI = "org.unhack.automachine2.BROADCAST_FILTER_UPDATE_UI";
+    public static final String INTENT_FILTER_INPUT_COMMAND  = "org.unhack.automachine2,BROADCAST_FILTER_INPUT_COMMAND";
+    public static final String INTENT_FILTER_CONNECTEDTHREAD_READY = "org.unhack.automachine2,BROADCAST_FILTER_CONNECTEDTHREAD_ISREADY";
     public Spinner mBtDevSpinner;
     public static String currentBtDevice = null;
     public TextView ioTextView;
+
 
     private BroadcastReceiver myReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String payload = intent.getStringExtra("payload");
-            ioTextView.append(payload);
+            ioTextView.setText("");
+            ioTextView.setText(payload);
         }
     };
 
@@ -46,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ioTextView = (TextView) findViewById(R.id.ioText);
-        registerReceiver(myReceiver, new IntentFilter(INTENT_FILTER));
+        registerReceiver(myReceiver, new IntentFilter(INTENT_FILTER_UPDATE_UI));
         //set onclick listeners
         Button ok_button = (Button) findViewById(R.id.button_ok);
         ok_button.setOnClickListener(mOnClickListener);
@@ -64,7 +68,10 @@ public class MainActivity extends AppCompatActivity {
         menu_button.setOnClickListener(mOnClickListener);
         Button dark_button = (Button) findViewById(R.id.button_dark);
         dark_button.setOnClickListener(mOnClickListener);
-
+        Button hu_button = (Button) findViewById(R.id.button_hu);
+        hu_button.setOnClickListener(mOnClickListener);
+        Button huoff_button = (Button) findViewById(R.id.button_huoff);
+        huoff_button.setOnClickListener(mOnClickListener);
 
         //get bt adaptors or check if there are any
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -125,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(View v) {
             int can_address;
             byte[] pld;
+            ArrayList payload;
             switch (v.getId()) {
                 case R.id.button_ok:
                     can_address = 0x3e5;
@@ -164,7 +172,42 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.button_up:
                     can_address = 0x3e5;
                     pld = new byte[] {0,0,0,0,0,16};
-                    sendCommand(can_address,pld);
+                    Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                    cmdUpIntent.putExtra("address", can_address);
+                    cmdUpIntent.putExtra("repeat",false);
+                    cmdUpIntent.putExtra("interval",0);
+                    payload = new ArrayList();
+                    payload.add(pld);
+                    cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdUpIntent);
+                    //sendCommand(can_address,pld);
+                    break;
+                case R.id.button_hu:
+                    can_address = 0x165;
+                    pld = new byte[] {(byte)200,(byte)192,16,0};
+                    Intent cmdHUonIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                    cmdHUonIntent.putExtra("address", can_address);
+                    cmdHUonIntent.putExtra("repeat",true);
+                    cmdHUonIntent.putExtra("interval",250);
+                    payload = new ArrayList();
+                    payload.add(pld);
+                    cmdHUonIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdHUonIntent);
+                    //sendCommand(can_address,pld);
+                    break;
+                case R.id.button_huoff:
+                    can_address = 0x165;
+                    pld = new byte[] {(byte)200,(byte)192,16,0};
+                    Intent cmdHUoffIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                    cmdHUoffIntent.putExtra("address", can_address);
+                    cmdHUoffIntent.putExtra("repeat",true);
+                    cmdHUoffIntent.putExtra("interval",250);
+                    cmdHUoffIntent.putExtra("delete", true);
+                    payload = new ArrayList();
+                    payload.add(pld);
+                    cmdHUoffIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdHUoffIntent);
+                    //sendCommand(can_address,pld);
                     break;
             }
         }
