@@ -11,17 +11,16 @@ import java.util.Iterator;
  */
 
 public class VehicleControlThread extends Thread {
-    private Context mContext;
-    private ConnectedThread mConnectedThread;
+    public ConnectedThread mConnectedThread;
     private ArrayList<VehicleCommand> commandQueue = new ArrayList<>();
     public boolean running = true;
+    public Context mContext;
     public VehicleControlThread(Context context, ConnectedThread thread){
         this.mContext = context;
         this.mConnectedThread = thread;
     }
 
     public void putCommand(VehicleCommand cmd){
-        Log.d("QUEUE", "PUT COMMAND");
         commandQueue.add(cmd);
     }
 

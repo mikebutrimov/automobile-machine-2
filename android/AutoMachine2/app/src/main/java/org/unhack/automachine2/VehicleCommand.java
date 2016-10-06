@@ -29,7 +29,6 @@ public class VehicleCommand {
     }
 
     public Msg.controlMessage getMessage(){
-        Log.d("VEHICLEMSG", "GET MESSAGE: "+ this.message.toString());
         return this.message;
     }
     public void fire(){

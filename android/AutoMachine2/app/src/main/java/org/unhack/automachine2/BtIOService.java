@@ -174,9 +174,9 @@ public class BtIOService extends Service {
                 b_title[0] = (byte) 0x23;
                 for (int i = 1; i < 8; i++){
                     try {
-                        b_artist[i] = (byte) artist.charAt(i);
-                        b_album[i] = (byte) album.charAt(i);
-                        b_title[i] = (byte) title.charAt(i);
+                        b_artist[i] = (byte) (int) artist.charAt(i);
+                        b_album[i] = (byte)(int) album.charAt(i);
+                        b_title[i] = (byte)(int) title.charAt(i);
                     }
                     catch (Exception e){
                         e.printStackTrace();
@@ -195,7 +195,7 @@ public class BtIOService extends Service {
                 payload.add(pld0);
                 payload.add(pld1);
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                sendBroadcast(cmdUpIntent);
+                //sendBroadcast(cmdUpIntent);
 
                 cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 cmdUpIntent.putExtra("address", can_address);
@@ -207,6 +207,7 @@ public class BtIOService extends Service {
                 payload.add(b_title);
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(cmdUpIntent);
+
                 pld0 = new byte[] {0x25,0,0,0,0,0,0,0};
                 pld1 = new byte[] {0x26,0,0,0};
                 cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);

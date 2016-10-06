@@ -31,8 +31,9 @@ public class ConnectedThread extends Thread {
     private Context mContext;
     private boolean running = true;
     private boolean housekeeping = true;
+    private boolean read = true;
     private final CommandProcessor cmdProcessor;
-    public controlMessage message;
+    private controlMessage message;
     public ConnectedThread(BluetoothSocket socket, Context context) {
         mContext = context;
         mmSocket = socket;
@@ -75,7 +76,6 @@ public class ConnectedThread extends Thread {
             try {
                 // Read from the InputStream
                 byte[] control = new byte[1];
-                Boolean read = true;
                 int zero_count = 0;
                 int read_count = 0;
                 //init counts with 0 value
@@ -156,7 +156,7 @@ public class ConnectedThread extends Thread {
         } catch (IOException e) { }
     }
 
-    public void writeMessage(controlMessage message)  {
+    public synchronized void writeMessage(controlMessage message)  {
 
         byte buffer[] =  message.toByteArray();
         int messageSize = buffer.length;
@@ -184,6 +184,7 @@ public class ConnectedThread extends Thread {
 
     public void halt(){
         Log.d("CONNECTED","Halting connection thread");
+        this.read = false;
         this.running = false;
         this.housekeeping = false;
         cancel();

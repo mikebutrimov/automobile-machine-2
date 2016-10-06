@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent cmdHUoffIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                     cmdHUoffIntent.putExtra("address", can_address);
                     cmdHUoffIntent.putExtra("repeat",true);
-                    cmdHUoffIntent.putExtra("interval",250);
+                    cmdHUoffIntent.putExtra("interval",100);
                     cmdHUoffIntent.putExtra("delete", true);
                     payload = new ArrayList();
                     payload.add(pld);
