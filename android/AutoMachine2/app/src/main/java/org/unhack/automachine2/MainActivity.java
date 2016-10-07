@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent cmdHUonIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                     cmdHUonIntent.putExtra("address", can_address);
                     cmdHUonIntent.putExtra("repeat",true);
-                    cmdHUonIntent.putExtra("interval",100);
+                    cmdHUonIntent.putExtra("interval",90);
                     payload = new ArrayList();
                     payload.add(pld);
                     cmdHUonIntent.putParcelableArrayListExtra("payload", payload);

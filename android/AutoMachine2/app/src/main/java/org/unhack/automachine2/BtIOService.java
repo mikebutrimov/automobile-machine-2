@@ -83,6 +83,9 @@ public class BtIOService extends Service {
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Log.d("BT DEVICE", currentBtDevice + " is Selected");
+        if (currentBtDevice == null){
+            this.onDestroy();
+        }
         if (!currentBtDevice.isEmpty()) {
             try {
                 mBtDevice = getBtDeviceFromName(currentBtDevice);

@@ -8,7 +8,7 @@ import android.util.Log;
 
 public class VehicleCommand {
     private boolean repeatness;
-    private  boolean isFired = false;
+    private boolean isFired = false;
     private int interval;
     private Msg.controlMessage message;
     private long lastExecutionTime = 0;

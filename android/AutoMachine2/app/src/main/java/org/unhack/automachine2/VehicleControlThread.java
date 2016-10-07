@@ -15,25 +15,43 @@ public class VehicleControlThread extends Thread {
     private ArrayList<VehicleCommand> commandQueue = new ArrayList<>();
     public boolean running = true;
     public Context mContext;
+    private boolean lock = false;
     public VehicleControlThread(Context context, ConnectedThread thread){
         this.mContext = context;
         this.mConnectedThread = thread;
     }
 
+    private synchronized boolean lock(){
+        boolean wasLocked = lock;
+        this.lock = true;
+        return wasLocked;
+    }
+    private synchronized void releaseLock(){
+        this.lock = false;
+    }
+
     public void putCommand(VehicleCommand cmd){
+        while (lock()){
+        }
         commandQueue.add(cmd);
+        releaseLock();
     }
 
     public void removeCommand(VehicleCommand cmd){
+        while (lock()){
+        }
         for (Iterator<VehicleCommand> iterator = commandQueue.iterator(); iterator.hasNext();){
             VehicleCommand command = iterator.next();
             if (cmd.getMessage().equals(command.getMessage())){
                 iterator.remove();
             }
         }
+        releaseLock();
     }
 
-    public synchronized void removeFiredCommands(){
+    public  void removeFiredCommands(){
+        while (lock()){
+        }
         //remove non-repeated and fired commands
         for (Iterator<VehicleCommand> iterator = commandQueue.iterator(); iterator.hasNext();){
             VehicleCommand cmd = iterator.next();
@@ -41,11 +59,15 @@ public class VehicleControlThread extends Thread {
                 iterator.remove();
             }
         }
+        releaseLock();
     }
 
-    public synchronized void processQueue() {
+    public  void processQueue() {
         if (mConnectedThread != null) {
-            for (VehicleCommand cmd : this.commandQueue) {
+            while (lock()){
+            }
+            for (Iterator<VehicleCommand> iterator = commandQueue.iterator(); iterator.hasNext();){
+                VehicleCommand cmd = iterator.next();
                 if (!cmd.isRepeated() && !cmd.isFired()) {
                     Msg.controlMessage msg = cmd.getMessage();
                     mConnectedThread.writeMessage(msg);
@@ -58,6 +80,7 @@ public class VehicleControlThread extends Thread {
                     }
                 }
             }
+        releaseLock();
         }
         else {
             Log.d("QUEUE","Waiting for connected thread to be fired up ");
