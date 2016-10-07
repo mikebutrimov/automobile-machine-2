@@ -184,10 +184,11 @@ public class ConnectedThread extends Thread {
 
     public void halt(){
         Log.d("CONNECTED","Halting connection thread");
+        cancel();
         this.read = false;
         this.running = false;
         this.housekeeping = false;
-        cancel();
+
     }
 
 }
