@@ -68,15 +68,18 @@ public class VehicleControlThread extends Thread {
             }
             for (Iterator<VehicleCommand> iterator = commandQueue.iterator(); iterator.hasNext();){
                 VehicleCommand cmd = iterator.next();
-                if (!cmd.isRepeated() && !cmd.isFired()) {
-                    Msg.controlMessage msg = cmd.getMessage();
-                    mConnectedThread.writeMessage(msg);
-                    cmd.fire();
-                } else {
+                if (cmd.isRepeated()) {
                     if ((cmd.getInterval() + cmd.getLastExecutionTime()) < System.currentTimeMillis()) {
-                        //exec!
                         mConnectedThread.writeMessage(cmd.getMessage());
                         cmd.setLastExecutionTime(System.currentTimeMillis());
+                    }
+
+                } else {
+                    if (!cmd.isRepeated() && !cmd.isFired()) {
+                        //exec!
+                        mConnectedThread.writeMessage(cmd.getMessage());
+                        cmd.fire();
+                        //cmd.setLastExecutionTime(System.currentTimeMillis());
                     }
                 }
             }

@@ -85,11 +85,11 @@ public class ConnectedThread extends Thread {
                 zero_count = 0;
                 read_count = 0;
                 int messageLen = 0;
-                while (read){
-
-                    mmInStream.read(control,0,1);
-                    int byte_readed = (int)(control[0]);
-                    //Log.d("LOOP VARS","BYTE: "+ String.valueOf(byte_readed) + " ZEROS: "
+                read = true;
+                while (read) {
+                    mmInStream.read(control, 0, 1);
+                    int byte_readed = (int) (control[0]);
+                    //Log.d("LOOP VARS", "BYTE: " + String.valueOf(byte_readed) + " ZEROS: "
                     //        + String.valueOf(zero_count) + " READS: " + String.valueOf(read_count));
                     read_count++;
                     if (byte_readed == 0) {
@@ -104,12 +104,12 @@ public class ConnectedThread extends Thread {
                             read = false;
                         }
                     }
-                    if (read_count - zero_count > 0){
+                    if (read_count - zero_count > 0) {
                         zero_count = 0;
                         read_count = 0;
                     }
                 }
-                while (mmInStream.available() < messageLen){
+                while (mmInStream.available() < messageLen) {
                     //wait for pizDATA
                 }
                 bytes = mmInStream.read(buffer, 0, messageLen);
@@ -133,18 +133,14 @@ public class ConnectedThread extends Thread {
                     //push command to command processor
                     cmdProcessor.fireCommand(can_address,message.getCanPayload(0).toByteArray());
                     //mContext.sendBroadcast(ioTextInten);
+
                 } catch (InvalidProtocolBufferException e) {
-                    e.printStackTrace();
-                } catch (IndexOutOfBoundsException e){
+                    //e.printStackTrace();
+                } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
-
-
-
-
             } catch (IOException e) {
                 e.printStackTrace();
-                break;
             }
         }
     }
@@ -156,7 +152,7 @@ public class ConnectedThread extends Thread {
         } catch (IOException e) { }
     }
 
-    public synchronized void writeMessage(controlMessage message)  {
+    public  void writeMessage(controlMessage message)  {
 
         byte buffer[] =  message.toByteArray();
         int messageSize = buffer.length;
@@ -185,7 +181,6 @@ public class ConnectedThread extends Thread {
     public void halt(){
         Log.d("CONNECTED","Halting connection thread");
         cancel();
-        this.read = false;
         this.running = false;
         this.housekeeping = false;
 

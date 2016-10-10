@@ -169,8 +169,11 @@ public class BtIOService extends Service {
                 //HARDCODED
                 //PRIBITO GVOZDIAMY (tm)
                 byte[] b_artist = new byte[8];
+                b_artist[0] = 0x21;
+
                 byte[] b_title = new byte[8];
-                for (int i = 0; i < 8; i++){
+                b_title[0] = 0x22;
+                for (int i = 1; i < 8; i++){
                     try {
                         b_artist[i] = (byte) (int) artist.charAt(i);
                         b_title[i] = (byte)(int) title.charAt(i);
@@ -181,16 +184,52 @@ public class BtIOService extends Service {
                     }
                 }
                 int can_address = 0xa4;
-                byte[] pld0 = new byte[] {0x20,0,0x58,0x01,0x21,0x21,0x21,0x21};
+                byte[] pld00 = new byte[] {0x4,0,0,0,0x2};
+                byte[] pld0 = new byte[] {0x10,0x2c,0x20,0,0x58,0x01,0x21,0x21};
+                ///
+                byte msg0[] = {0x4,0x0,0x0,0x0,0x02};
+                byte msg1[] = {0x10,0x2c,0x21,0x0,0x5a,0x0,0x20,0x20};
+                byte msg2[] = {0x21,0x59,0x58,0x57,0x0,0x0,0x0,0x0};
+                byte msg3[] = {0x22,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
+                byte msg4[] = {0x23,0x0,0x0,0x0,0x0,0x75,0x6e,0x68};
+                byte msg5[] = {0x24,0x61,0x63,0x6b,0x21,0x20,0x20,0x0};
+                byte msg6[] = {0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
+                byte msg7[] = {0x26,0x0,0x0,0x0};
+
+                ///
                 Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 cmdUpIntent.putExtra("address", can_address);
                 cmdUpIntent.putExtra("repeat",false);
                 cmdUpIntent.putExtra("interval",0);
                 ArrayList payload = new ArrayList();
-                payload.add(pld0);
-                payload.add(b_artist);
-                payload.add(b_title);
+                payload.add(msg0);
+                payload.add(msg1);
+                payload.add(msg2);
+                //payload.add(b_title);
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+                cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                cmdUpIntent.putExtra("address", can_address);
+                cmdUpIntent.putExtra("repeat",false);
+                cmdUpIntent.putExtra("interval",0);
+                byte[] finish = new byte[] {0x22,0,0,0};
+                payload = new ArrayList();
+                payload.add(msg3);
+                payload.add(msg4);
+                payload.add(msg5);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+                payload = new ArrayList();
+                payload.add(msg6);
+                payload.add(msg7);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+
+
+
+
+
+
 
             }
         }
