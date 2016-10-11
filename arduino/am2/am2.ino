@@ -12,6 +12,8 @@ const byte FFBYTES[8] = {255,255,255,255,255,255,255,255};
 long timer = 0;
 byte sop[35];
 
+long last = 0;
+
 byte byte_val = 0;
 byte vals[bytes*8];
 byte byte_vals[bytes];
@@ -198,6 +200,8 @@ void readOrder(){
         Serial.print (" ");
       }
       Serial.println();
+      Serial.println(millis() - last);
+      last = millis();
     }
 
     //retransmitt message to can
@@ -237,6 +241,10 @@ void readCan(){
 
       Serial1.write(sop,SOPLEN);
       Serial1.write(buffer,stream.bytes_written);
+      Serial.print("Can address  ");
+      Serial.print(canId, DEC);
+      Serial.print("  Bytes written:  ");
+      Serial.println(stream.bytes_written, DEC);
     }
   }
 }
@@ -314,14 +322,45 @@ void setup() {
  
 void loop() {
   // put your main code here, to run repeatedly:
-  if (readyForNext == 0) {
+ /* if (readyForNext == 0) {
     for (int i = 0; i< bytes; i++){
       Serial.print(byte_vals[i],HEX);
       Serial.print(" ");
     }
     Serial.println();
     readyForNext = 1;
-  }
+  }*/
   readCan();
   readOrder(); 
+  //byte hu[4] = {200,192,32,0};
+
+  //CAN.sendMsgBuf(0x165,0,4,hu);
+  //Serial.println(millis());
+    unsigned char msg0[5] = {0x4,0x0,0x0,0x0,0x02};
+    unsigned char msg1[8] = {0x10,0x2c,0x21,0x0,0x5a,0x0,0x20,0x20};
+    unsigned char msg2[8] = {0x21,0x59,0x58,0x57,0x0,0x0,0x0,0x0};
+    unsigned char msg3[8] = {0x22,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
+    unsigned char msg4[8] = {0x23,0x0,0x0,0x0,0x0,0x75,0x6e,0x68};
+    unsigned char msg5[8] = {0x24,0x61,0x63,0x6b,0x21,0x20,0x20,0x0};
+    unsigned char msg6[8] = {0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
+    unsigned char msg7[4] = {0x26,0x0,0x0,0x0};
+    
+    /*
+    CAN.sendMsgBuf(0xA4,0,5,msg0);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg1);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg2);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg3);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg4);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg5);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,8,msg6);
+    delay(20);
+    CAN.sendMsgBuf(0xA4,0,4,msg7);
+    */
+
 }
