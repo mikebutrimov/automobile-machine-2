@@ -330,8 +330,8 @@ void loop() {
     Serial.println();
     readyForNext = 1;
   }*/
-  readCan();
-  readOrder(); 
+  //readCan();
+  //readOrder(); 
   //byte hu[4] = {200,192,32,0};
 
   //CAN.sendMsgBuf(0x165,0,4,hu);
@@ -345,7 +345,7 @@ void loop() {
     unsigned char msg6[8] = {0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
     unsigned char msg7[4] = {0x26,0x0,0x0,0x0};
     
-    /*
+    
     CAN.sendMsgBuf(0xA4,0,5,msg0);
     delay(20);
     CAN.sendMsgBuf(0xA4,0,8,msg1);
@@ -361,6 +361,7 @@ void loop() {
     CAN.sendMsgBuf(0xA4,0,8,msg6);
     delay(20);
     CAN.sendMsgBuf(0xA4,0,4,msg7);
-    */
+
+    delay(100);
 
 }
