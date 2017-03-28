@@ -30,12 +30,35 @@ const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
 MCP_CAN CAN(10); 
+const int HEARTBEAT_SIZE = 9;
 
 const byte VOL_LEN=36;
 uint8_t vol[VOL_LEN]={0x99,0x78,0x68,0x60,0x55,0x50,0x48,0x46,0x44,0x42,
                       0x40,0x38,0x36,0x34,0x32,0x30,0x28,0x26,0x24,0x22,
                       0x20,0x18,0x16,0x14,0x12,0x10,0x09,0x08,0x07,0x06,
                       0x05,0x04,0x03,0x02,0x01,0x00};
+
+
+struct CAN_COMMAND {
+  short address;
+  short bytes;
+  int putInTime;
+  int delayTime;
+  short payload[8];
+};
+
+CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
+  {1312,8,0,1000,{1,0,0,0,0,0,0,0}}, 
+  {305,6,0,100,{1,16,0,0,0,32}},
+  {485,7,0,500,{63,63,63,63,72,0,3}},
+  {741,4,0,1000,{0,0,0,0}},
+  {997,6,0,1000,{0,0,0,0,0,0}},
+  {357,4,0,100,{200,192,32,0}},
+  {353,7,0,100,{160,3,6,1,0,1,0}},
+  {805,3,0,500,{0,11,0}},
+  {869,5,0,500,{20,50,43,0,0}},
+};
+
 
 
 void crc(uint8_t *packet) {
@@ -277,6 +300,36 @@ void testReadCan(){
   }
 }
 
+//some can heartbeat tools
+void sendCmd(CAN_COMMAND cmd){
+  int b_count = cmd.bytes;
+  byte * buffer = new byte[b_count];
+  //copy useful bytes from command to buffer to send it in CAN
+  for (int i = 0; i< b_count; i++){
+    buffer[i] = cmd.payload[i];
+  }
+  CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  Serial.print(millis());
+  Serial.print("\t");
+  Serial.println("cmd was sent");
+  delete[] buffer;
+}
+
+void dispatcher(){
+  for (int i = 0; i< HEARTBEAT_SIZE; i++){
+    if ( ((int)millis() - heartbeat[i].delayTime - heartbeat[i].putInTime) >= 0){
+      sendCmd(heartbeat[i]);
+      heartbeat[i].putInTime = millis(); 
+    }
+  }
+}
+
+void batch_send(CAN_COMMAND * cmds, int len){
+  for (int i = 0; i< len; i++){
+    sendCmd(cmds[i]);
+  }
+}
+
 
 
 
@@ -330,38 +383,7 @@ void loop() {
     Serial.println();
     readyForNext = 1;
   }*/
-  //readCan();
-  //readOrder(); 
-  //byte hu[4] = {200,192,32,0};
-
-  //CAN.sendMsgBuf(0x165,0,4,hu);
-  //Serial.println(millis());
-    unsigned char msg0[5] = {0x4,0x0,0x0,0x0,0x02};
-    unsigned char msg1[8] = {0x10,0x2c,0x21,0x0,0x5a,0x0,0x20,0x20};
-    unsigned char msg2[8] = {0x21,0x59,0x58,0x57,0x0,0x0,0x0,0x0};
-    unsigned char msg3[8] = {0x22,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
-    unsigned char msg4[8] = {0x23,0x0,0x0,0x0,0x0,0x75,0x6e,0x68};
-    unsigned char msg5[8] = {0x24,0x61,0x63,0x6b,0x21,0x20,0x20,0x0};
-    unsigned char msg6[8] = {0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x0};
-    unsigned char msg7[4] = {0x26,0x0,0x0,0x0};
-    
-    
-    CAN.sendMsgBuf(0xA4,0,5,msg0);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg1);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg2);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg3);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg4);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg5);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,8,msg6);
-    delay(20);
-    CAN.sendMsgBuf(0xA4,0,4,msg7);
-
-    delay(100);
-
+  readCan();
+  readOrder(); 
+  dispatcher();
 }

@@ -5,8 +5,9 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 10;
-const int HEARTBEAT_SIZE = 6;
+const int HEARTBEAT_SIZE = 9;
 boolean startup = false;
+boolean track = false;
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
 struct CAN_COMMAND {
@@ -23,7 +24,24 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
   {485,7,0,500,{63,63,63,63,72,0,3}},
   {741,4,0,1000,{0,0,0,0}},
   {997,6,0,1000,{0,0,0,0,0,0}},
-  {357,4,0,100,{200,192,32,0}}, 
+  {357,4,0,100,{200,192,32,0}},
+  {353,7,0,100,{160,3,6,1,0,1,0}},
+  {805,3,0,500,{0,11,0}},
+  {869,5,0,500,{20,50,43,0,0}},
+};
+
+
+
+CAN_COMMAND track_name[8] = {
+
+{164, 8, 0, 0,{16,  44,  32,  0, 88,  19,  32,  32}},  
+{164, 8, 0, 0,{33,  80, 48, 119, 110, 100, 32, 32}},
+{164, 8, 0, 0,{34,  66, 89, 32, 32, 85, 78, 72}}, 
+{164, 8, 0, 0,{35,  65, 67, 75, 32, 77,  97,  110}},
+{164, 8, 0, 0,{36,  117, 32,  67,  104, 97,  111, 32}},  
+{164, 8, 0, 0,{37,  45,  32,  82,  117, 109, 98,  97}},  
+{164, 4, 0, 0,{38,  32,  68,  101}},
+{933, 6, 0, 1000, {1, 255, 255, 2, 45,  0}},
 };
 
 
@@ -54,6 +72,12 @@ void dispatcher(){
   }
 }
 
+void batch_send(CAN_COMMAND * cmds, int len){
+  for (int i = 0; i< len; i++){
+    sendCmd(cmds[i]);
+  }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -77,10 +101,22 @@ void loop()
         CAN.sendMsgBuf(1056, 0, 2, start_seq);
         delay(10);
       }
+      delay(100);
+      Serial.println("before end of start-up seq");
+      unsigned char start_seq2[8] = {32,16,9,8,80,2,32,34};
+      CAN.sendMsgBuf(1504, 0, 8, start_seq2);
+      
       startup = true;
     }
 
   dispatcher();
+
+  if (!track){
+    batch_send(track_name,8);
+    track = true;
+    batch_send(track_name,7);
+  }
+  
   
 }
 
