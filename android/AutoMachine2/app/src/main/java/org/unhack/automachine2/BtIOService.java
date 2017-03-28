@@ -225,12 +225,6 @@ public class BtIOService extends Service {
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(cmdUpIntent);
 
-
-
-
-
-
-
             }
         }
     }

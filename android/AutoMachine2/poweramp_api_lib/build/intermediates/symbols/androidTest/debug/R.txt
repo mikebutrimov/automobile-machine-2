@@ -1,0 +1,4 @@
+int string app_name 0x7f020000
+int string unknown 0x7f020001
+int string unknown_album_name 0x7f020002
+int string unknown_artist_name 0x7f020003
