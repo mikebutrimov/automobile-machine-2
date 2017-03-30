@@ -209,23 +209,22 @@ void readOrder(){
     if (!status){
       Serial.println("Error decoding message");
     }
-    Serial.println("Decoded message:");
-    Serial.print("Addr : ");
-    Serial.println(message.can_address, HEX);
-    Serial.print("Payload count: ");
-    Serial.println(message.can_payload_count, DEC);
-    for (int i = 0; i< message.can_payload_count; i++){
-      Serial.print("Payload ");
-      Serial.print(i, DEC);
-      Serial.print(" : ");
-      for (int j = 0; j<message.can_payload[i].size ; j++){
-        Serial.print (message.can_payload[i].bytes[j], DEC);
-        Serial.print (" ");
-      }
-      Serial.println();
-      Serial.println(millis() - last);
-      last = millis();
-    }
+    //Serial.println("Decoded message:");
+    //Serial.print("Addr : ");
+    //Serial.println(message.can_address, HEX);
+    //Serial.print("Payload count: ");
+    //Serial.println(message.can_payload_count, DEC);
+    //for (int i = 0; i< message.can_payload_count; i++){
+    //  Serial.print("Payload ");
+    //  Serial.print(i, DEC);
+    //  Serial.print(" : ");
+    //  for (int j = 0; j<message.can_payload[i].size ; j++){
+    //    Serial.print (message.can_payload[i].bytes[j], DEC);
+    //    Serial.print (" ");
+    //  }
+    //  Serial.println();
+    //  last = millis();
+    //}
 
     //retransmitt message to can
     int canId = message.can_address;
@@ -264,10 +263,10 @@ void readCan(){
 
       Serial1.write(sop,SOPLEN);
       Serial1.write(buffer,stream.bytes_written);
-      Serial.print("Can address  ");
-      Serial.print(canId, DEC);
-      Serial.print("  Bytes written:  ");
-      Serial.println(stream.bytes_written, DEC);
+      //Serial.print("Can address  ");
+      //Serial.print(canId, DEC);
+      //Serial.print("  Bytes written:  ");
+      //Serial.println(stream.bytes_written, DEC);
     }
   }
 }

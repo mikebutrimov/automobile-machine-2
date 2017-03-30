@@ -161,29 +161,86 @@ public class BtIOService extends Service {
         if(mTrackIntent != null) {
             mCurrentTrack = mTrackIntent.getBundleExtra(PowerampAPI.TRACK);
             if(mCurrentTrack != null) {
+                int position = mCurrentTrack.getInt(PowerampAPI.Track.POS_IN_LIST);
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
                 String album = mCurrentTrack.getString(PowerampAPI.Track.ALBUM);
                 String title = mCurrentTrack.getString(PowerampAPI.Track.TITLE);
-                Log.d("POWERAMP!", " " + artist + album + title);
+                Log.d("POWERAMP!", " " +position + " " + artist + " " + album + " " + title);
                 //HARDCODED
                 //PRIBITO GVOZDIAMY (tm)
-                /*byte[] b_artist = new byte[8];
-                b_artist[0] = 0x21;
+                String track_info = artist + " " + album + " " + title;
 
-                byte[] b_title = new byte[8];
-                b_title[0] = 0x22;
-                for (int i = 1; i < 8; i++){
-                    try {
-                        b_artist[i] = (byte) (int) artist.charAt(i);
-                        b_title[i] = (byte)(int) title.charAt(i);
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
-                        //FIDO in a sake of debugging
-                    }
-                }*/
+                if (track_info.length() >= 40){
+                    track_info = track_info.substring(0,40);
+                }
+                else {
+                    track_info = track_info.substring(0, track_info.length());
+                }
+
+                byte[] track_info_as_array = new byte[40];
+
+                //fill track info array
+                for (int i = 0; i< track_info.length(); i++){
+                    track_info_as_array[i] = (byte)(int) track_info.charAt(i);
+                }
+
                 int can_address = 0xa4;
+                byte msg[] = {16,  44,  32,  0, 88,  19,  32,  32};
+                msg[3] = (byte) position;
+                msg[6] = track_info_as_array[0];
+                msg[7] = track_info_as_array[1];
+                Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                cmdUpIntent.putExtra("address", can_address);
+                cmdUpIntent.putExtra("repeat",false);
+                cmdUpIntent.putExtra("interval",0);
+                ArrayList payload = new ArrayList();
+                payload.add(msg);
+                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(cmdUpIntent);
+
+
+                byte[] prefix = {33,34,35,36,37,38};
+                int j = 2;
+                for (int i = 0; i< 6; i++){
+                    if (i > 4){
+                        msg = new byte[4];
+                        msg[0] = prefix[i];
+                        for (int k = 1; k< 4; k++){
+                            msg[k] =  track_info_as_array[j];
+                            j++;
+                        }
+                    }
+                    else {
+                        msg = new byte[8];
+                        msg[0] = prefix[i];
+                        for (int k = 1; k< 8; k++){
+                            msg[k] =  track_info_as_array[j];
+                            j++;
+                        }
+                    }
+
+
+
+                    cmdUpIntent.putExtra("address", can_address);
+                    cmdUpIntent.putExtra("repeat",false);
+                    cmdUpIntent.putExtra("interval",0);
+                    payload = new ArrayList();
+                    payload.add(msg);
+                    cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdUpIntent);
+                }
+
+
+
+
+
+
+
+
+
+
+                /*
                 byte msg1[] = {16,  44,  32,  0, 88,  19,  32,  32};
                 byte msg2[] = {33,  80, 48, 119, 110, 100, 32, 32};
                 byte msg3[] = {34,  66, 89, 32, 32, 85, 78, 72};
@@ -217,7 +274,7 @@ public class BtIOService extends Service {
                 payload.add(msg7);
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(cmdUpIntent);
-
+                */
 
 
 
