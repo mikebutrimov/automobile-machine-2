@@ -309,9 +309,9 @@ void sendCmd(CAN_COMMAND cmd){
     buffer[i] = cmd.payload[i];
   }
   CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  Serial.print(millis());
-  Serial.print("\t");
-  Serial.println("cmd was sent");
+  //Serial.print(millis());
+  //Serial.print("\t");
+  //Serial.println("cmd was sent");
   delete[] buffer;
 }
 

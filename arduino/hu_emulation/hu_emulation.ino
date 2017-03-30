@@ -44,6 +44,21 @@ CAN_COMMAND track_name[8] = {
 {933, 6, 0, 1000, {1, 255, 255, 2, 45,  0}},
 };
 
+CAN_COMMAND track_name2[8] = {
+
+{164, 8, 0, 0,{16,  44,  32,  0, 88,  19,  32,  32}},  
+{164, 8, 0, 0,{33,  81, 49, 120, 111, 101, 32, 32}},
+{164, 8, 0, 0,{34,  67, 90, 32, 32, 86, 79, 73}}, 
+{164, 8, 0, 0,{35,  65, 67, 75, 32, 77,  97,  110}},
+{164, 8, 0, 0,{36,  117, 32,  67,  105, 98,  112, 32}},  
+{164, 8, 0, 0,{37,  46,  32,  83,  118, 110, 98,  97}},  
+{164, 4, 0, 0,{38,  32,  68,  101}},
+{933, 6, 0, 1000, {1, 255, 255, 2, 45,  0}},
+};
+
+
+unsigned char cd_time[6] = {1, 255, 255, 2, 0,  0};
+
 
 void sendCmd(CAN_COMMAND cmd){
   int b_count = cmd.bytes;
@@ -59,7 +74,7 @@ void sendCmd(CAN_COMMAND cmd){
   delete[] buffer;
 }
 
-
+int sec = 0;
 
 
 
@@ -86,7 +101,6 @@ void setup()
     {
         Serial.println("CAN BUS Shield init fail");
         Serial.println(" Init CAN BUS Shield again");
-        delay(100);
     }
     Serial.println("CAN BUS Shield init ok!");
 }
@@ -101,7 +115,7 @@ void loop()
         CAN.sendMsgBuf(1056, 0, 2, start_seq);
         delay(10);
       }
-      delay(100);
+      delay(500);
       Serial.println("before end of start-up seq");
       unsigned char start_seq2[8] = {32,16,9,8,80,2,32,34};
       CAN.sendMsgBuf(1504, 0, 8, start_seq2);
@@ -111,12 +125,29 @@ void loop()
 
   dispatcher();
 
-  if (!track){
-    batch_send(track_name,8);
+
+
+  if (sec == 60){
+      sec = 0;
+  }
+    
+    if (millis()%1000 == 0){
+      sec++;
+      cd_time[4] = char(sec);
+      //Serial.println(sec);
+      CAN.sendMsgBuf(933, 0, 6, cd_time);
+    }
+
+
+      if ( !track){
+    batch_send(track_name2,7);
+    //batch_send(track_name2,8);
+    Serial.println("track1");
     track = true;
-    batch_send(track_name,7);
   }
   
+  
+   
   
 }
 
