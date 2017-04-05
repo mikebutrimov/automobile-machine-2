@@ -62,6 +62,7 @@ public class BtIOService extends Service {
             mVehicleControlThread = new VehicleControlThread(getApplicationContext(),connect.getConnectedThread());
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
+            registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
         }
     };
 
@@ -74,6 +75,12 @@ public class BtIOService extends Service {
         }
     };
 
+    private BroadcastReceiver mTrackPosReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("TRACKPOS", "fired");
+        }
+    };
 
 
     @Override
@@ -152,6 +159,7 @@ public class BtIOService extends Service {
         unregisterReceiver(mCommandReceiver);
         unregisterReceiver(mConnectedThreadIsReady);
         unregisterReceiver(mTrackReceiver);
+        unregisterReceiver(mTrackPosReceiver);
         super.onDestroy();
     }
 
