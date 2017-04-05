@@ -5,7 +5,7 @@
 // the cs pin of the version after v1.1 is default to D9
 // v0.9b and v1.0 is default D10
 const int SPI_CS_PIN = 10;
-const int HEARTBEAT_SIZE = 9;
+const int HEARTBEAT_SIZE = 8;
 boolean startup = false;
 boolean track = false;
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
@@ -25,7 +25,6 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
   {741,4,0,1000,{0,0,0,0}},
   {997,6,0,1000,{0,0,0,0,0,0}},
   {357,4,0,100,{200,192,32,0}},
-  {353,7,0,100,{160,3,6,1,0,1,0}},
   {805,3,0,500,{0,11,0}},
   {869,5,0,500,{20,50,43,0,0}},
 };
