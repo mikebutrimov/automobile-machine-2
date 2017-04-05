@@ -30,7 +30,7 @@ const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
 MCP_CAN CAN(10); 
-const int HEARTBEAT_SIZE = 9;
+const int HEARTBEAT_SIZE = 8;
 
 const byte VOL_LEN=36;
 uint8_t vol[VOL_LEN]={0x99,0x78,0x68,0x60,0x55,0x50,0x48,0x46,0x44,0x42,
@@ -54,7 +54,7 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
   {741,4,0,1000,{0,0,0,0}},
   {997,6,0,1000,{0,0,0,0,0,0}},
   {357,4,0,100,{200,192,32,0}},
-  {353,7,0,100,{160,3,6,1,0,1,0}},
+  //{353,7,0,100,{160,3,6,1,0,1,0}},
   {805,3,0,500,{0,11,0}},
   {869,5,0,500,{20,50,43,0,0}},
 };
@@ -192,8 +192,8 @@ void readOrder(){
   else {
   }
 }
-  Serial.print("Message SIZE: ");
-  Serial.println(messageLen, DEC);
+  //Serial.print("Message SIZE: ");
+  //Serial.println(messageLen, DEC);
   while (Serial1.available() < messageLen){
   }
   Serial.println("__________________");
@@ -228,7 +228,7 @@ void readOrder(){
 
     //retransmitt message to can
     int canId = message.can_address;
-    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f){
+    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
