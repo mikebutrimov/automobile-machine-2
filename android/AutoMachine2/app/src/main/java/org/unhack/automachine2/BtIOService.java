@@ -62,6 +62,7 @@ public class BtIOService extends Service {
             mVehicleControlThread = new VehicleControlThread(getApplicationContext(),connect.getConnectedThread());
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
+            registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
         }
     };
 
@@ -74,6 +75,12 @@ public class BtIOService extends Service {
         }
     };
 
+    private BroadcastReceiver mTrackPosReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("TRACKPOS", "fired");
+        }
+    };
 
 
     @Override
@@ -152,6 +159,7 @@ public class BtIOService extends Service {
         unregisterReceiver(mCommandReceiver);
         unregisterReceiver(mConnectedThreadIsReady);
         unregisterReceiver(mTrackReceiver);
+        unregisterReceiver(mTrackPosReceiver);
         super.onDestroy();
     }
 
@@ -169,7 +177,7 @@ public class BtIOService extends Service {
                 Log.d("POWERAMP!", " " +position + " " + artist + " " + album + " " + title);
                 //HARDCODED
                 //PRIBITO GVOZDIAMY (tm)
-                String track_info = artist + " " + album + " " + title;
+                String track_info = artist + /*" " + album +*/ " " + title;
 
                 if (track_info.length() >= 40){
                     track_info = track_info.substring(0,40);
@@ -187,9 +195,9 @@ public class BtIOService extends Service {
 
                 int can_address = 0xa4;
                 byte msg[] = {16,  44,  32,  0, 88,  19,  32,  32};
-                msg[3] = (byte) position;
-                msg[6] = track_info_as_array[0];
-                msg[7] = track_info_as_array[1];
+                //msg[3] = (byte) position;
+                //msg[6] = track_info_as_array[0];
+                //msg[7] = track_info_as_array[1];
                 Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 cmdUpIntent.putExtra("address", can_address);
                 cmdUpIntent.putExtra("repeat",false);
