@@ -195,7 +195,7 @@ void readOrder(){
   //Serial.println(messageLen, DEC);
   while (Serial1.available() < messageLen){
   }
-  Serial.println("__________________");
+  //Serial.println("__________________");
   byte * proto_buf_message = new byte[messageLen];
   byte received = Serial1.readBytes(proto_buf_message, messageLen);
   if (received == messageLen){
@@ -227,7 +227,7 @@ void readOrder(){
 
     //retransmitt message to can
     int canId = message.can_address;
-    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4){
+    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);

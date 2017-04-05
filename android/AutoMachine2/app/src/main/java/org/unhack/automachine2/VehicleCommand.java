@@ -33,6 +33,9 @@ public class VehicleCommand {
     public Msg.controlMessage getMessage(){
         return this.message;
     }
+    public void setMessage(Msg.controlMessage msg){
+        this.message = msg;
+    }
     public void fire(){
         this.isFired = true;
     }

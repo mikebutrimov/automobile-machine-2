@@ -72,6 +72,11 @@ public class MainActivity extends AppCompatActivity {
         hu_button.setOnClickListener(mOnClickListener);
         Button huoff_button = (Button) findViewById(R.id.button_huoff);
         huoff_button.setOnClickListener(mOnClickListener);
+        Button track_pos_on_button = (Button) findViewById(R.id.button_track_pos_on);
+        track_pos_on_button.setOnClickListener(mOnClickListener);
+        Button track_pos_off_button = (Button) findViewById(R.id.button_track_pos_off);
+        track_pos_off_button.setOnClickListener(mOnClickListener);
+
 
         //get bt adaptors or check if there are any
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -208,6 +213,34 @@ public class MainActivity extends AppCompatActivity {
                     cmdHUoffIntent.putParcelableArrayListExtra("payload", payload);
                     sendBroadcast(cmdHUoffIntent);
                     //sendCommand(can_address,pld);
+                    break;
+                case  R.id.button_track_pos_on:
+                    can_address = 933;
+                    pld = new byte[] {(byte)1,(byte)255,(byte)255,0,0,0};
+                    Intent cmdTrackPosOnIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                    cmdTrackPosOnIntent.putExtra("address", can_address);
+                    cmdTrackPosOnIntent.putExtra("repeat",true);
+                    cmdTrackPosOnIntent.putExtra("interval",1000);
+                    cmdTrackPosOnIntent.putExtra("delete", false);
+                    cmdTrackPosOnIntent.putExtra("mutator","trackPosition");
+                    payload = new ArrayList();
+                    payload.add(pld);
+                    cmdTrackPosOnIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdTrackPosOnIntent);
+                    break;
+                case  R.id.button_track_pos_off:
+                    can_address = 933;
+                    pld = new byte[] {(byte)1,(byte)255,(byte)255,0,0,0};
+                    Intent cmdTrackPosOffIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                    cmdTrackPosOffIntent.putExtra("address", can_address);
+                    cmdTrackPosOffIntent.putExtra("repeat",true);
+                    cmdTrackPosOffIntent.putExtra("interval",1000);
+                    cmdTrackPosOffIntent.putExtra("delete", true);
+                    cmdTrackPosOffIntent.putExtra("mutator","trackPosition");
+                    payload = new ArrayList();
+                    payload.add(pld);
+                    cmdTrackPosOffIntent.putParcelableArrayListExtra("payload", payload);
+                    sendBroadcast(cmdTrackPosOffIntent);
                     break;
             }
         }

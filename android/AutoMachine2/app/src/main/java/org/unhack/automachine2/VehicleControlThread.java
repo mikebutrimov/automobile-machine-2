@@ -42,7 +42,7 @@ public class VehicleControlThread extends Thread {
         }
         for (Iterator<VehicleCommand> iterator = commandQueue.iterator(); iterator.hasNext();){
             VehicleCommand command = iterator.next();
-            if (cmd.getMessage().equals(command.getMessage())){
+            if (cmd.getMessage().equals(command.getMessage()) || cmd.getMessage().getCanAddress() == command.getMessage().getCanAddress()){
                 iterator.remove();
             }
         }
@@ -74,11 +74,10 @@ public class VehicleControlThread extends Thread {
                         String mutator = cmd.getMutator();
                         if (mutator != null){
                             buf_msg = Utils.getMutators().get(mutator).runCommand(buf_msg);
-                            mConnectedThread.writeMessage(buf_msg);
+                            cmd.setMessage(buf_msg);
                         }
-                        else {
-                            mConnectedThread.writeMessage(cmd.getMessage());
-                        }
+
+                        mConnectedThread.writeMessage(cmd.getMessage());
                         cmd.setLastExecutionTime(System.currentTimeMillis());
                     }
 

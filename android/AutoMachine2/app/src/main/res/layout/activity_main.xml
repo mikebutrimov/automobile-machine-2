@@ -127,4 +127,21 @@
         android:layout_alignStart="@+id/button_hu"
         android:id="@+id/button_huoff" />
 
+    <Button
+        android:id="@+id/button_track_pos_off"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button_huoff"
+        android:layout_centerHorizontal="true"
+        android:text="POS OFF" />
+
+    <Button
+        android:id="@+id/button_track_pos_on"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/button_track_pos_off"
+        android:layout_alignStart="@+id/button_track_pos_off"
+        android:layout_alignTop="@+id/button_huoff"
+        android:text="POS ON" />
+
 </RelativeLayout>

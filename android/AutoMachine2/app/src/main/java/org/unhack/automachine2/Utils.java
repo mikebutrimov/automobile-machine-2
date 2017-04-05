@@ -3,6 +3,7 @@ package org.unhack.automachine2;
 import android.util.Log;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.StringValue;
 
 import org.unhack.automachine2.Msg.controlMessage;
 
@@ -23,15 +24,19 @@ public class Utils {
     public static Msg.controlMessage track_position_mutator(Msg.controlMessage msg){
         //unsigned char cd_time[6] = {1, 255, 255, 0, 0,  0};
         //pos in list /total time in min / total time in sec / pos min / pos sec
+        //Log.d("MUTATOR", "Fired");
         byte[] can_payload = msg.getCanPayload(0).toByteArray();
         int min = can_payload[3];
         int sec = can_payload[4];
         int totaltime = min*60+sec;
         totaltime = totaltime+1;
+        //Log.d("MUTATOR", String.valueOf(min) + " " + String.valueOf(sec) + " " + String.valueOf(totaltime));
         min = totaltime / 60;
         sec = totaltime % 60;
+        //Log.d("MUTATOR", String.valueOf(min) + " " + String.valueOf(sec) + " " + String.valueOf(totaltime));
         can_payload[3] = (byte) min;
         can_payload[4] = (byte) sec;
+        //Log.d("MUTATOR", String.valueOf(can_payload[3]) + " " + String.valueOf(can_payload[4]) + " " + String.valueOf(totaltime));
         ArrayList<byte[]> payload = new ArrayList<>();
         payload.add(can_payload);
         msg = createMessage(msg.getCanAddress(), payload);
