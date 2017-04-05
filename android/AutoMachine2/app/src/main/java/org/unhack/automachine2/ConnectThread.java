@@ -41,12 +41,12 @@ public class ConnectThread extends Thread {
             // Connect the device through the socket. This will block
             // until it succeeds or throws an exception
             mmSocket.connect();
-        } catch (IOException connectException) {
+        } catch (java.io.IOException connectException) {
             connectException.printStackTrace();
             // Unable to connect; close the socket and get out
             try {
                 mmSocket.close();
-            } catch (IOException closeException) { }
+            } catch (java.io.IOException closeException) { }
             return;
         }
 

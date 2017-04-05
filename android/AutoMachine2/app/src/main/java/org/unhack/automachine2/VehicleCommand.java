@@ -1,6 +1,7 @@
 package org.unhack.automachine2;
 
 import android.util.Log;
+import android.util.StringBuilderPrinter;
 
 /**
  * Created by unhack on 10/6/16.
@@ -12,6 +13,7 @@ public class VehicleCommand {
     private int interval;
     private Msg.controlMessage message;
     private long lastExecutionTime = 0;
+    private String mutator;
 
 
     public VehicleCommand(Boolean repeatness, int interval, Msg.controlMessage message){
@@ -42,5 +44,14 @@ public class VehicleCommand {
     }
     public long getLastExecutionTime(){
         return this.lastExecutionTime;
+    }
+
+    public String getMutator(){
+        if (mutator.isEmpty())  return null;
+        return this.mutator;
+    }
+
+    public void setMutator(String mutator){
+        this.mutator = mutator;
     }
 }

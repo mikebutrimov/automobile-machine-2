@@ -70,7 +70,15 @@ public class VehicleControlThread extends Thread {
                 VehicleCommand cmd = iterator.next();
                 if (cmd.isRepeated()) {
                     if ((cmd.getInterval() + cmd.getLastExecutionTime()) < System.currentTimeMillis()) {
-                        mConnectedThread.writeMessage(cmd.getMessage());
+                        Msg.controlMessage buf_msg =  cmd.getMessage();
+                        String mutator = cmd.getMutator();
+                        if (mutator != null){
+                            buf_msg = Utils.getMutators().get(mutator).runCommand(buf_msg);
+                            mConnectedThread.writeMessage(buf_msg);
+                        }
+                        else {
+                            mConnectedThread.writeMessage(cmd.getMessage());
+                        }
                         cmd.setLastExecutionTime(System.currentTimeMillis());
                     }
 

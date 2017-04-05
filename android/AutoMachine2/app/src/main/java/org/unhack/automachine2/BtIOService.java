@@ -43,7 +43,10 @@ public class BtIOService extends Service {
             ArrayList payload = intent.getParcelableArrayListExtra("payload");
             Msg.controlMessage message = Utils.createMessage(address,payload);
             Log.d("RECEIVER", "MESSAGE: " + message.toString());
+            String mutator = intent.getStringExtra("mutator");
+
             VehicleCommand mVehicleCommand = new VehicleCommand(repeat,interval,message);
+            mVehicleCommand.setMutator(mutator);
             Log.d("BOOLEAN", "Boolean extra: " + String.valueOf(delete));
             if (delete) {
                 mVehicleControlThread.removeCommand(mVehicleCommand);
@@ -156,10 +159,15 @@ public class BtIOService extends Service {
         catch (Exception e){
             e.printStackTrace();
         }
-        unregisterReceiver(mCommandReceiver);
-        unregisterReceiver(mConnectedThreadIsReady);
-        unregisterReceiver(mTrackReceiver);
-        unregisterReceiver(mTrackPosReceiver);
+        try {
+            unregisterReceiver(mCommandReceiver);
+            unregisterReceiver(mConnectedThreadIsReady);
+            unregisterReceiver(mTrackReceiver);
+            unregisterReceiver(mTrackPosReceiver);
+        }
+        catch (Exception e){
+            Log.d("BTIOSErvice","suppress exception on exit while unregistering recievers ");
+        }
         super.onDestroy();
     }
 
