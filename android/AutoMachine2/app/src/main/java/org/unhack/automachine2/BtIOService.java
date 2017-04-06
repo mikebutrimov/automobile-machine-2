@@ -29,6 +29,7 @@ public class BtIOService extends Service {
     public VehicleControlThread mVehicleControlThread;
     private Intent mTrackIntent;
     private Bundle mCurrentTrack;
+    private static int currentTrackPosition = 0;
     public BtIOService() {
     }
 
@@ -65,7 +66,8 @@ public class BtIOService extends Service {
             mVehicleControlThread = new VehicleControlThread(getApplicationContext(),connect.getConnectedThread());
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
-            registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
+            //registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
+            registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
         }
     };
 
@@ -82,8 +84,45 @@ public class BtIOService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d("TRACKPOS", "fired");
+
+
+            int pos =  intent.getIntExtra("pos",0);
+            Log.d("TRACKPOS", "Position in sec : " + String.valueOf(pos));
+            int min = pos / 60;
+            int sec = pos % 60;
+            byte[] can_payload = {1, (byte)255, (byte)255, 0, 0,  0};
+            can_payload[3] = (byte) min;
+            can_payload[4] = (byte) sec;
+            Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
+            Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
+            sendBroadcast(cmdIntentPosOff);
+            sendBroadcast(cmdIntentPosOn);
         }
     };
+
+    private BroadcastReceiver mTrackStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("TRACKSTATUS", "fired");
+            byte[] can_payload = {1, (byte)255, (byte)255, 0, 0,  0};
+            if (intent.getBooleanExtra("paused", true)) {
+                Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
+                sendBroadcast(cmdIntentPosOff);
+            }
+            else {
+                int pos = intent.getIntExtra("pos",0);
+                int min = pos / 60;
+                int sec = pos % 60;
+                can_payload[0] = (byte) currentTrackPosition;
+                can_payload[3] = (byte) min;
+                can_payload[4] = (byte) sec;
+                Log.d("TRACKSTATUS", "Position in sec : " + String.valueOf(pos));
+                Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
+                sendBroadcast(cmdIntentPosOn);
+            }
+        }
+    };
+
 
 
     @Override
@@ -178,6 +217,17 @@ public class BtIOService extends Service {
             mCurrentTrack = mTrackIntent.getBundleExtra(PowerampAPI.TRACK);
             if(mCurrentTrack != null) {
                 int position = mCurrentTrack.getInt(PowerampAPI.Track.POS_IN_LIST);
+                currentTrackPosition = position;
+                byte[] can_payload = {0, (byte)255, (byte)255, 0, 0,  0};
+                can_payload[0] = (byte) position;
+                Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
+                Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
+                sendBroadcast(cmdIntentPosOff);
+
+                if (!mCurrentTrack.getBoolean("paused")) {
+                    sendBroadcast(cmdIntentPosOn);
+                }
+
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
                 String album = mCurrentTrack.getString(PowerampAPI.Track.ALBUM);
@@ -185,20 +235,27 @@ public class BtIOService extends Service {
                 Log.d("POWERAMP!", " " +position + " " + artist + " " + album + " " + title);
                 //HARDCODED
                 //PRIBITO GVOZDIAMY (tm)
-                String track_info = artist + /*" " + album +*/ " " + title;
-
-                if (track_info.length() >= 40){
-                    track_info = track_info.substring(0,40);
-                }
-                else {
-                    track_info = track_info.substring(0, track_info.length());
-                }
-
                 byte[] track_info_as_array = new byte[40];
 
-                //fill track info array
-                for (int i = 0; i< track_info.length(); i++){
-                    track_info_as_array[i] = (byte)(int) track_info.charAt(i);
+                if (title.length() >= 20){
+                    title = title.substring(0,20);
+                }
+                if (artist.length() >= 20){
+                    artist = artist.substring(0,20);
+                }
+                for (int i = 0; i< 20; i++){
+                    try {
+                        track_info_as_array[i] = (byte) artist.charAt(i);
+                    }
+                    catch (StringIndexOutOfBoundsException e){
+                        track_info_as_array[i] = 0;
+                    }
+                    try {
+                        track_info_as_array[20 + i] = (byte) title.charAt(i);
+                    }
+                    catch (StringIndexOutOfBoundsException e){
+                        track_info_as_array[20 + i] = 0;
+                    }
                 }
 
                 int can_address = 0xa4;
@@ -245,6 +302,11 @@ public class BtIOService extends Service {
                     payload.add(msg);
                     cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                     sendBroadcast(cmdUpIntent);
+
+
+
+
+
                 }
 
 

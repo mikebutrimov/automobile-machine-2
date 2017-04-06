@@ -231,7 +231,7 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        Serial.println("Message to CAN was send");
+        //Serial.println("Message to CAN was send");
       }
     }
   }

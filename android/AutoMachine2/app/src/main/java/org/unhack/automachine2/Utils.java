@@ -1,5 +1,6 @@
 package org.unhack.automachine2;
 
+import android.content.Intent;
 import android.util.Log;
 
 import com.google.protobuf.ByteString;
@@ -73,5 +74,20 @@ public class Utils {
         //og.d("Utils.create" , "Can payload count : " + String.valueOf(message.getCanPayloadCount()));
         Log.d("Utils.create", "Message size " + String.valueOf(message.build().getSerializedSize()));
         return message.build();
+    }
+
+    public static Intent genereateVhclCmd(int can_address, byte[] can_payload, boolean repeat, int interval,  boolean delete, String mutator){
+        can_address = can_address;
+        byte[] pld = can_payload;
+        Intent cmdIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+        cmdIntent.putExtra("address", can_address);
+        cmdIntent.putExtra("repeat",repeat);
+        cmdIntent.putExtra("interval",interval);
+        cmdIntent.putExtra("delete", delete);
+        cmdIntent.putExtra("mutator",mutator);
+        ArrayList payload = new ArrayList();
+        payload.add(pld);
+        cmdIntent.putParcelableArrayListExtra("payload", payload);
+        return (cmdIntent);
     }
 }
