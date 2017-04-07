@@ -30,6 +30,12 @@ public class BtIOService extends Service {
     private Intent mTrackIntent;
     private Bundle mCurrentTrack;
     private static int currentTrackPosition = 0;
+    private static byte [] pause_payload = {0,2,0};
+    private static byte [] play_payload = {0,11,0};
+    private static Intent cmdPauseIntentOn = Utils.genereateVhclCmd(805, pause_payload, true, 500, false,"");
+    private static Intent cmdPlayIntentOn = Utils.genereateVhclCmd(805, play_payload, true, 500, false,"");
+    private static Intent cmdPauseIntentOff = Utils.genereateVhclCmd(805, pause_payload, true, 500, true,"");
+    private static Intent cmdPlayIntentOff = Utils.genereateVhclCmd(805, play_payload, true, 500, true,"");
     public BtIOService() {
     }
 
@@ -67,7 +73,7 @@ public class BtIOService extends Service {
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
             //registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
-            registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
+            //registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
         }
     };
 
@@ -108,8 +114,14 @@ public class BtIOService extends Service {
             if (intent.getBooleanExtra("paused", true)) {
                 Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
                 sendBroadcast(cmdIntentPosOff);
+                sendBroadcast(cmdPlayIntentOff);
+                sendBroadcast(cmdPauseIntentOn);
+
+
             }
             else {
+                sendBroadcast(cmdPauseIntentOff);
+                sendBroadcast(cmdPlayIntentOn);
                 int pos = intent.getIntExtra("pos",0);
                 int min = pos / 60;
                 int sec = pos % 60;
@@ -223,10 +235,15 @@ public class BtIOService extends Service {
                 Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
                 Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
                 sendBroadcast(cmdIntentPosOff);
+                byte[] can_40000 = {4,0,0,0,(byte) position};
+                Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
+                //sendBroadcast(dn40000);
 
                 if (!mCurrentTrack.getBoolean("paused")) {
                     sendBroadcast(cmdIntentPosOn);
                 }
+
+
 
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
@@ -259,7 +276,8 @@ public class BtIOService extends Service {
                 }
 
                 int can_address = 0xa4;
-                byte msg[] = {16,  44,  32,  0, 88,  19,  32,  32};
+                //rude fisrt string formatting
+                byte msg[] = {16,  44,  32,  0, 88,  19,  (byte)artist.charAt(0),  (byte)artist.charAt(1)};
                 //msg[3] = (byte) position;
                 //msg[6] = track_info_as_array[0];
                 //msg[7] = track_info_as_array[1];
@@ -308,54 +326,6 @@ public class BtIOService extends Service {
 
 
                 }
-
-
-
-
-
-
-
-
-
-
-                /*
-                byte msg1[] = {16,  44,  32,  0, 88,  19,  32,  32};
-                byte msg2[] = {33,  80, 48, 119, 110, 100, 32, 32};
-                byte msg3[] = {34,  66, 89, 32, 32, 85, 78, 72};
-                byte msg4[] = {35,  65, 67, 75, 32, 77,  97,  110};
-                byte msg5[] = {36,  117, 32,  67,  104, 97,  111, 32};
-                byte msg6[] = {37,  45,  32,  82,  117, 109, 98,  97};
-                byte msg7[] = {38,  32,  68,  101};
-
-                ///
-                Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
-                cmdUpIntent.putExtra("address", can_address);
-                cmdUpIntent.putExtra("repeat",false);
-                cmdUpIntent.putExtra("interval",0);
-                ArrayList payload = new ArrayList();
-                payload.add(msg1);
-                payload.add(msg2);
-                payload.add(msg3);
-                payload.add(msg4);
-
-
-                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                sendBroadcast(cmdUpIntent);
-
-                cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
-                cmdUpIntent.putExtra("address", can_address);
-                cmdUpIntent.putExtra("repeat",false);
-                cmdUpIntent.putExtra("interval",0);
-                payload = new ArrayList();
-                payload.add(msg5);
-                payload.add(msg6);
-                payload.add(msg7);
-                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                sendBroadcast(cmdUpIntent);
-                */
-
-
-
             }
         }
     }

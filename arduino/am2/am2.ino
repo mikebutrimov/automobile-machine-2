@@ -159,6 +159,13 @@ void isr_read_msg(){
   }
   readyForNext = 0;
   interrupts();
+  ///
+  for (int i = 0; i< bytes; i++){
+    Serial.print(byte_vals[i]);
+    Serial.print(" ");
+  }
+  Serial.println();
+  ///
   if (byte_vals[0] == 0x02){
     delayMicroseconds(16); 
     fastSend(ack_buffer,8,1);
@@ -213,7 +220,7 @@ void readOrder(){
     //Serial.println(message.can_address, HEX);
     //Serial.print("Payload count: ");
     //Serial.println(message.can_payload_count, DEC);
-    //for (int i = 0; i< message.can_payload_count; i++){
+    for (int i = 0; i< message.can_payload_count; i++){
     //  Serial.print("Payload ");
     //  Serial.print(i, DEC);
     //  Serial.print(" : ");
@@ -223,11 +230,11 @@ void readOrder(){
     //  }
     //  Serial.println();
     //  last = millis();
-    //}
+    }
 
     //retransmitt message to can
     int canId = message.can_address;
-    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933){
+    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933 || canId == 805){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
@@ -336,7 +343,7 @@ void setup() {
   pinMode2(AINETIN, INPUT);
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
-  //attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
+  attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
   Serial1.begin(115200);
   //generate sop
