@@ -167,7 +167,7 @@ void isr_read_msg(){
   }
   readyForNext = 0;
   
-  if (byte_vals[0] == 0x02){
+  if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit 
     if (vals[87] == 0){
@@ -187,13 +187,13 @@ void isr_read_msg(){
    
   
   if (readyForNext == 0) {
-    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+    //delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
-    //for (int i = 0; i< bytes; i++){
-    //  Serial.print(byte_vals[i],HEX);
-    //  Serial.print(" ");
-    //}
-    //Serial.println();
+    for (int i = 0; i< bytes; i++){
+      Serial.print(byte_vals[i],HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
     readyForNext = 1;
   }
   interrupts();
@@ -412,14 +412,13 @@ void loop() {
   if (ainetAck == true && ainetInit == false){ //start ainet processor init seq.
     noInterrupts();
     ainetInit = true; //we init it only once
-    delay(750);
+    delay(1750);
     //Serial.println("int seq initiated");
     fastByteSend (ainet_commands[0],11);    
     //Serial.print(millis());
     //Serial.print(" ");
     //Serial.println("0 sent");
     delay(24);
-    fastByteSend (ainet_commands[6],11);
     fastByteSend (ainet_commands[6],11);
     //Serial.print(millis());
     //Serial.print(" ");
@@ -428,14 +427,10 @@ void loop() {
     ainet_commands[12][3] = 0x2a;
     crc(ainet_commands[12]);
     fastByteSend (ainet_commands[12],11);
-    fastByteSend (ainet_commands[12],11);
     //Serial.print(millis());
     //Serial.print(" ");
     //Serial.println("12 sent");
-    delay(50);
-    //unmute
-    fastByteSend (ainet_commands[19],11);
-    fastByteSend (ainet_commands[19],11);
+
     //Serial.print(millis());
     //Serial.print(" ");
     //Serial.println("19 sent");
@@ -443,13 +438,20 @@ void loop() {
     ainet_commands[7][3] = vol[0];
     crc(ainet_commands[7]);
     fastByteSend (ainet_commands[7],11);
-    fastByteSend (ainet_commands[7],11);
     //Serial.print(millis());
     //Serial.print(" ");    
     //Serial.println("7 sent");
+    delay(50);
+    //unmute
+    fastByteSend (ainet_commands[19],11);
     //balance
+
+    //presets
+    delay(50);
+    //unmute
+    fastByteSend (ainet_commands[2],11);
+    
     delay(60);
-    fastByteSend (ainet_commands[8],11);
     fastByteSend (ainet_commands[8],11);
     //Serial.print(millis());
     //Serial.print(" ");
@@ -457,10 +459,11 @@ void loop() {
     //fader
     delay(20);
     fastByteSend (ainet_commands[9],11);
-    fastByteSend (ainet_commands[9],11);
     //Serial.print(millis());
     //Serial.print(" ");
     //Serial.println("9 sent");
+    
+    
     interrupts();
     
   }
