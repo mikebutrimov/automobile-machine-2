@@ -4,6 +4,7 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include "msg.pb.h"
+#include "ainet.h"
 int counts = 0;
 byte bits = 0;
 const char BYTES = 8;
@@ -19,6 +20,8 @@ byte vals[bytes*8];
 byte byte_vals[bytes];
 bool fast_byte_buffer[bytes*8];
 bool ack_buffer[8];
+bool ainetInit = false;
+bool ainetAck = false;
 int readyForNext = 1;
 int messageLen = 0;
 uint8_t i,j,type;
@@ -96,9 +99,9 @@ void fastSend(bool* packet, int packet_size, bool ack){
     }
     else {
       digitalWrite2(AINETOUT, HIGH);
-      delayMicroseconds(8);
+      delayMicroseconds(5);
       digitalWrite2(AINETOUT, LOW);
-      delayMicroseconds(14);
+      delayMicroseconds(18);
     }
   }
   interrupts();
@@ -122,8 +125,13 @@ void fastByteSend(byte * packet, int packet_size){
 }
 
 void volUp(){
-  byte packet[11] = {0x40,0x02,0xD2,0x99,0x00,0x00,0x00,0x00,0x00,0x00,0xD7};
+  byte packet[11] = {0x40,0x02,0xD2,0x78,0x00,0x00,0x00,0x00,0x00,0x00,0xD7};
+  crc(packet);
   fastByteSend(packet,11);
+}
+
+void sendAiNetPacket(){
+  fastByteSend(ainet_commands[14],11);
 }
 
 
@@ -158,19 +166,39 @@ void isr_read_msg(){
     }
   }
   readyForNext = 0;
-  interrupts();
-  ///
-  for (int i = 0; i< bytes; i++){
-    Serial.print(byte_vals[i]);
-    Serial.print(" ");
-  }
-  Serial.println();
-  ///
+  
   if (byte_vals[0] == 0x02){
-    delayMicroseconds(16); 
+    //we must count 40 micros from the front of last impulse
+    //so it depends on value of last bit 
+    if (vals[87] == 0){
+      delayMicroseconds(23);
+      }
+    else {
+      delayMicroseconds(31);
+    }
+    //send ac
     fastSend(ack_buffer,8,1);
+    //start init seq. by setting ainetAck to true
+    //this means that we get request from processor to headunit (from 0x40 to 0x02)
+    if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67){
+      ainetAck = true;
+    }
   }
+   
+  
+  if (readyForNext == 0) {
+    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+    //some commented out code to output last captured packet
+    //for (int i = 0; i< bytes; i++){
+    //  Serial.print(byte_vals[i],HEX);
+    //  Serial.print(" ");
+    //}
+    //Serial.println();
+    readyForNext = 1;
+  }
+  interrupts();
 }
+
 
 void readOrder(){
   if (!Serial1.available()) return;
@@ -198,8 +226,6 @@ void readOrder(){
   else {
   }
 }
-  //Serial.print("Message SIZE: ");
-  //Serial.println(messageLen, DEC);
   while (Serial1.available() < messageLen){
   }
   //Serial.println("__________________");
@@ -313,10 +339,14 @@ void sendCmd(CAN_COMMAND cmd){
   for (int i = 0; i< b_count; i++){
     buffer[i] = cmd.payload[i];
   }
-  CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  byte status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  while (status !=0){
+    status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  }
   //Serial.print(millis());
   //Serial.print("\t");
   //Serial.println("cmd was sent");
+  //Serial.println(status);
   delete[] buffer;
 }
 
@@ -335,12 +365,10 @@ void batch_send(CAN_COMMAND * cmds, int len){
   }
 }
 
-
-
-
  
 void setup() {
-  pinMode2(AINETIN, INPUT);
+  //init ainet pins
+  pinMode2(AINETIN, INPUT); 
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
@@ -351,7 +379,7 @@ void setup() {
     sop[i] = 0;
   }
   sop[SOPLEN-1] = PLEN;
-  
+  //generate ainet ack buffer
   byte b = 0x02;
   for (j=0;j<8;j++) {
     type=(b & (1 << (7-j))) >> (7-j);
@@ -362,8 +390,9 @@ void setup() {
       ack_buffer[j] = 1;
     }
   }
-  
-  START_INIT:
+
+  //commented out due we are not using can part now
+  /*START_INIT:
 
     if(CAN_OK == CAN.begin(CAN_125KBPS))                   
     {
@@ -375,20 +404,69 @@ void setup() {
         Serial.println("Init CAN BUS Shield again");
         delay(100);
         goto START_INIT;
-    }
+    }*/
+    
 }
  
 void loop() {
-  // put your main code here, to run repeatedly:
- /* if (readyForNext == 0) {
-    for (int i = 0; i< bytes; i++){
-      Serial.print(byte_vals[i],HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
-    readyForNext = 1;
-  }*/
-  readCan();
-  readOrder(); 
-  dispatcher();
+  if (ainetAck == true && ainetInit == false){ //start ainet processor init seq.
+    noInterrupts();
+    ainetInit = true; //we init it only once
+    delay(750);
+    //Serial.println("int seq initiated");
+    fastByteSend (ainet_commands[0],11);    
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("0 sent");
+    delay(24);
+    fastByteSend (ainet_commands[6],11);
+    fastByteSend (ainet_commands[6],11);
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("6 sent");
+    delay(65);
+    ainet_commands[12][3] = 0x2a;
+    crc(ainet_commands[12]);
+    fastByteSend (ainet_commands[12],11);
+    fastByteSend (ainet_commands[12],11);
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("12 sent");
+    delay(50);
+    //unmute
+    fastByteSend (ainet_commands[19],11);
+    fastByteSend (ainet_commands[19],11);
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("19 sent");
+    delay(90);
+    ainet_commands[7][3] = vol[0];
+    crc(ainet_commands[7]);
+    fastByteSend (ainet_commands[7],11);
+    fastByteSend (ainet_commands[7],11);
+    //Serial.print(millis());
+    //Serial.print(" ");    
+    //Serial.println("7 sent");
+    //balance
+    delay(60);
+    fastByteSend (ainet_commands[8],11);
+    fastByteSend (ainet_commands[8],11);
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("8 sent");
+    //fader
+    delay(20);
+    fastByteSend (ainet_commands[9],11);
+    fastByteSend (ainet_commands[9],11);
+    //Serial.print(millis());
+    //Serial.print(" ");
+    //Serial.println("9 sent");
+    interrupts();
+    
+  }
+
+  //commented out due we not using can now
+  //readCan();
+  //readOrder(); 
+  //dispatcher();
 }
