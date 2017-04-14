@@ -435,7 +435,7 @@ void loop() {
     //Serial.print(" ");
     //Serial.println("19 sent");
     delay(90);
-    ainet_commands[7][3] = vol[0];
+    ainet_commands[7][3] = vol[15];
     crc(ainet_commands[7]);
     fastByteSend (ainet_commands[7],11);
     //Serial.print(millis());
@@ -465,6 +465,12 @@ void loop() {
     
     
     interrupts();
+
+
+    delay(5000);
+    ainet_commands[7][3] = vol[20];
+    crc(ainet_commands[7]);
+    fastByteSend (ainet_commands[7],11);
     
   }
 
