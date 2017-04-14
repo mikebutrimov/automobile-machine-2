@@ -409,10 +409,11 @@ void setup() {
 }
  
 void loop() {
-  if (ainetAck == true && ainetInit == false){ //start ainet processor init seq.
+  if (ainetAck == true){ //start ainet processor init seq.
     noInterrupts();
-    ainetInit = true; //we init it only once
-    delay(1750);
+    ainetInit = true;
+    ainetAck = false;//we init it only once
+    delay(2000);
     //Serial.println("int seq initiated");
     fastByteSend (ainet_commands[0],11);    
     //Serial.print(millis());
@@ -435,7 +436,7 @@ void loop() {
     //Serial.print(" ");
     //Serial.println("19 sent");
     delay(90);
-    ainet_commands[7][3] = vol[15];
+    ainet_commands[7][3] = vol[0];
     crc(ainet_commands[7]);
     fastByteSend (ainet_commands[7],11);
     //Serial.print(millis());
@@ -457,7 +458,7 @@ void loop() {
     //Serial.print(" ");
     //Serial.println("8 sent");
     //fader
-    delay(20);
+    delay(30);
     fastByteSend (ainet_commands[9],11);
     //Serial.print(millis());
     //Serial.print(" ");
