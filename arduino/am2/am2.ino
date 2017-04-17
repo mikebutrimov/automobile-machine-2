@@ -27,8 +27,8 @@ int messageLen = 0;
 uint8_t i,j,type;
 const byte PLEN = 33;
 const byte SOPLEN = 35;
-const int AINETIN = 2;
-const int AINETOUT = 13;
+const int AINETIN = 20;
+const int AINETOUT = 21;
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
@@ -127,6 +127,7 @@ void sendAiNetCommand(byte * packet, int packet_size){
 }
 
 void volUp(){
+  Serial.println("in Vup");
   if ((vol_index+1) < 36){
     vol_index = vol_index + 1;
     ainet_commands[7][3] = vol_index;
@@ -138,10 +139,13 @@ void volUp(){
     while (status !=0){
       status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
+    buf[0] = (byte) (224+vol_index);
+    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
 void volDown(){
+  Serial.println("in Vdown");
   if ((vol_index-1) > 0){
     vol_index = vol_index - 1;
     ainet_commands[7][3] = vol_index;
@@ -153,6 +157,8 @@ void volDown(){
     while (status !=0){
       status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
+    buf[0] = (byte)(224+vol_index);
+    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
@@ -256,13 +262,13 @@ void isr_read_msg(){
    
   
   if (readyForNext == 0) {
-    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+    //delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
-    //for (int i = 0; i< bytes; i++){
-    //  Serial.print(byte_vals[i],HEX);
-    //  Serial.print(" ");
-    //}
-    //Serial.println();
+    for (int i = 0; i< bytes; i++){
+      Serial.print(byte_vals[i],HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
     readyForNext = 1;
   }
   interrupts();
@@ -458,8 +464,8 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
-  //Serial.begin(115200);
-  //Serial1.begin(115200);
+  Serial.begin(115200);
+  Serial1.begin(115200);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
     sop[i] = 0;
