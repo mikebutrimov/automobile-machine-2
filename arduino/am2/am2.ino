@@ -41,6 +41,8 @@ uint8_t vol[VOL_LEN]={0x99,0x78,0x68,0x60,0x55,0x50,0x48,0x46,0x44,0x42,
                       0x20,0x18,0x16,0x14,0x12,0x10,0x09,0x08,0x07,0x06,
                       0x05,0x04,0x03,0x02,0x01,0x00};
 
+int vol_index = 15; // default volume index to restore
+
 
 struct CAN_COMMAND {
   short address;
@@ -107,7 +109,7 @@ void fastSend(bool* packet, int packet_size, bool ack){
   interrupts();
 }
 
-void fastByteSend(byte * packet, int packet_size){
+void sendAiNetCommand(byte * packet, int packet_size){
   noInterrupts();
   for (i=0;i<packet_size;i++) {
     for (j=0;j<8;j++) {
@@ -120,18 +122,85 @@ void fastByteSend(byte * packet, int packet_size){
       }
     }
   }
-  fastSend(fast_byte_buffer, packet_size*8,0);
+  fastSend(fast_byte_buffer, packet_size*8, 0);
   interrupts();
 }
 
 void volUp(){
-  byte packet[11] = {0x40,0x02,0xD2,0x78,0x00,0x00,0x00,0x00,0x00,0x00,0xD7};
-  crc(packet);
-  fastByteSend(packet,11);
+  if ((vol_index+1) < 36){
+    vol_index = vol_index + 1;
+    ainet_commands[7][3] = vol_index;
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    byte buf[1];
+    buf[0]= (byte) vol_index;
+    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    while (status !=0){
+      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    }
+  }
 }
 
-void sendAiNetPacket(){
-  fastByteSend(ainet_commands[14],11);
+void volDown(){
+  if ((vol_index-1) > 0){
+    vol_index = vol_index - 1;
+    ainet_commands[7][3] = vol_index;
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    byte buf[1];
+    buf[0]= (byte) vol_index;
+    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    while (status !=0){
+      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    }
+  }
+}
+
+void init_ainet_processor(){
+  if (ainetAck == true){ //start ainet processor init seq.
+    noInterrupts();
+    
+    ainetInit = true;
+    ainetAck = false;//we init it only once
+    
+    delay(2000);
+    Serial.println("int seq initiated");
+    sendAiNetCommand(ainet_commands[0],11);    
+    
+    delay(24);
+    sendAiNetCommand(ainet_commands[6],11);
+    
+    delay(65);
+    ainet_commands[12][3] = 0x2a;
+    crc(ainet_commands[12]);
+    sendAiNetCommand(ainet_commands[12],11);
+    
+    delay(90);
+    ainet_commands[7][3] = vol[0];
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    
+    delay(50);
+    sendAiNetCommand(ainet_commands[19],11);
+
+    delay(50);
+    sendAiNetCommand(ainet_commands[2],11);
+    
+    delay(60);
+    sendAiNetCommand(ainet_commands[8],11);
+    
+    delay(30);
+    sendAiNetCommand(ainet_commands[9],11);
+    
+    interrupts();
+
+    //restore volume to mid level
+    delay(5000);
+    Serial.println("Restore volume level");
+    ainet_commands[7][3] = vol[vol_index];
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+  }
 }
 
 
@@ -263,10 +332,24 @@ void readOrder(){
     if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933 || canId == 805){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
-        CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        while (status !=0){
+          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        }
         //Serial.println("Message to CAN was send");
       }
     }
+  }
+}
+
+void vUpVdown(unsigned char *can_buf){
+  if (can_buf[0] == 4){
+    //volume down
+    volDown();
+  }
+  if (can_buf[0] == 8){
+    //volume up
+    volUp();
   }
 }
 
@@ -276,9 +359,12 @@ void readCan(){
   unsigned char can_buf[8]; 
   int canId;
   if(CAN_MSGAVAIL == CAN.checkReceive()){
+    vUpVdown(can_buf);
     CAN.readMsgBuf(&len, can_buf);
     canId = (int) CAN.getCanId();
     if (canId == 0x21f && len != 0){
+      //process volum up and down buttons
+      
       uint8_t buffer[64];
       size_t message_length;
       bool status;
@@ -392,7 +478,7 @@ void setup() {
   }
 
   //commented out due we are not using can part now
-  /*START_INIT:
+  START_INIT:
 
     if(CAN_OK == CAN.begin(CAN_125KBPS))                   
     {
@@ -404,79 +490,13 @@ void setup() {
         Serial.println("Init CAN BUS Shield again");
         delay(100);
         goto START_INIT;
-    }*/
+    }
     
 }
  
 void loop() {
-  if (ainetAck == true){ //start ainet processor init seq.
-    noInterrupts();
-    ainetInit = true;
-    ainetAck = false;//we init it only once
-    delay(2000);
-    //Serial.println("int seq initiated");
-    fastByteSend (ainet_commands[0],11);    
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("0 sent");
-    delay(24);
-    fastByteSend (ainet_commands[6],11);
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("6 sent");
-    delay(65);
-    ainet_commands[12][3] = 0x2a;
-    crc(ainet_commands[12]);
-    fastByteSend (ainet_commands[12],11);
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("12 sent");
-
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("19 sent");
-    delay(90);
-    ainet_commands[7][3] = vol[0];
-    crc(ainet_commands[7]);
-    fastByteSend (ainet_commands[7],11);
-    //Serial.print(millis());
-    //Serial.print(" ");    
-    //Serial.println("7 sent");
-    delay(50);
-    //unmute
-    fastByteSend (ainet_commands[19],11);
-    //balance
-
-    //presets
-    delay(50);
-    //unmute
-    fastByteSend (ainet_commands[2],11);
-    
-    delay(60);
-    fastByteSend (ainet_commands[8],11);
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("8 sent");
-    //fader
-    delay(30);
-    fastByteSend (ainet_commands[9],11);
-    //Serial.print(millis());
-    //Serial.print(" ");
-    //Serial.println("9 sent");
-    
-    
-    interrupts();
-
-
-    delay(5000);
-    ainet_commands[7][3] = vol[20];
-    crc(ainet_commands[7]);
-    fastByteSend (ainet_commands[7],11);
-    
-  }
-
-  //commented out due we not using can now
-  //readCan();
-  //readOrder(); 
-  //dispatcher();
+  init_ainet_processor();
+  readCan();
+  readOrder(); 
+  dispatcher();
 }
