@@ -187,13 +187,13 @@ void isr_read_msg(){
    
   
   if (readyForNext == 0) {
-    //delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
-    for (int i = 0; i< bytes; i++){
-      Serial.print(byte_vals[i],HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
+    //for (int i = 0; i< bytes; i++){
+    //  Serial.print(byte_vals[i],HEX);
+    //  Serial.print(" ");
+    //}
+    //Serial.println();
     readyForNext = 1;
   }
   interrupts();
@@ -372,8 +372,8 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
-  Serial.begin(115200);
-  Serial1.begin(115200);
+  //Serial.begin(115200);
+  //Serial1.begin(115200);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
     sop[i] = 0;
