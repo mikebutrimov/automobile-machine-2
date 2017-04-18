@@ -1,6 +1,6 @@
 #include "arduino2.h"
-const int AINETIN = 2;
-const int AINETOUT = 13;
+const int AINETIN = 3;
+const int AINETOUT = 21;
 uint8_t i,j,type;
 const int bytes = 11;
 bool fast_byte_buffer[88];
