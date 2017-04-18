@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 
 import org.unhack.automachine2.Msg.controlMessage;
 import com.maxmpz.poweramp.player.PowerampAPI;
@@ -156,7 +157,8 @@ public class ConnectedThread extends Thread {
 
         byte buffer[] =  message.toByteArray();
         int messageSize = buffer.length;
-        Log.d("writeMessage", "buffer size: " + buffer.length);
+        Log.d("writeMessage", "Payload: " + Arrays.toString(message.getCanPayload(0).toByteArray()) );
+        
         byte[] sof_buffer = new byte[SOFLEN];
         for (int i = 0; i< SOFLEN-2; i++){
             sof_buffer[i] = 0;

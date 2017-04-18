@@ -268,11 +268,11 @@ void readOrder(){
     //  Serial.print("Payload ");
     //  Serial.print(i, DEC);
     //  Serial.print(" : ");
-    //  for (int j = 0; j<message.can_payload[i].size ; j++){
-    //    Serial.print (message.can_payload[i].bytes[j], DEC);
-    //    Serial.print (" ");
-    //  }
-    //  Serial.println();
+      for (int j = 0; j<message.can_payload[i].size ; j++){
+        Serial.print (message.can_payload[i].bytes[j], DEC);
+        Serial.print (" ");
+      }
+      Serial.println();
     //  last = millis();
     }
 
@@ -282,10 +282,12 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        while (status !=0){
-          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        }
-        //Serial.println("Message to CAN was send");
+        //while (status !=0){
+        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        //}
+        //Serial.println("Message to CAN was send with status: ");
+        //Serial.print(status);
+        //Serial.println();
       }
     }
   }
@@ -337,13 +339,14 @@ void sendCmd(CAN_COMMAND cmd){
     buffer[i] = cmd.payload[i];
   }
   byte status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  while (status !=0){
-    status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  }
+  //while (status !=0){
+  //  status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  //}
   //Serial.print(millis());
   //Serial.print("\t");
-  //Serial.println("cmd was sent");
-  //Serial.println(status);
+  //Serial.println("cmd was sent with status: ");
+  //Serial.print(status);
+  //Serial.println();
   delete[] buffer;
 }
 
@@ -369,7 +372,7 @@ void setup() {
   pinMode2(AINETIN, INPUT); 
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
-  attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
+  //attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
   Serial1.begin(115200);
   //generate sop
