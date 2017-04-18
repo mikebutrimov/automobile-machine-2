@@ -5,10 +5,22 @@
 #include <pb_decode.h>
 #include "msg.pb.h"
 #include "ainet.h"
+#include "Button.h"
+#include "can_commands.h"
+
+
+//virtual-real buttons
+//main purpose is to use once written code
+const int VUPPIN = 32;
+const int VDOWNPIN = 33;
+Button vUpButton = Button(VUPPIN);
+Button vDownButton = Button(VDOWNPIN);
+
+
 int counts = 0;
 byte bits = 0;
 const char BYTES = 8;
-const int bytes = 11;
+//const int bytes = 11;
 const byte FFBYTES[8] = {255,255,255,255,255,255,255,255};
 long timer = 0;
 byte sop[35];
@@ -18,190 +30,19 @@ long last = 0;
 byte byte_val = 0;
 byte vals[bytes*8];
 byte byte_vals[bytes];
-bool fast_byte_buffer[bytes*8];
 bool ack_buffer[8];
 bool ainetInit = false;
 bool ainetAck = false;
 int readyForNext = 1;
 int messageLen = 0;
-uint8_t i,j,type;
 const byte PLEN = 33;
 const byte SOPLEN = 35;
-const int AINETIN = 2;
-const int AINETOUT = 13;
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
 MCP_CAN CAN(10); 
-const int HEARTBEAT_SIZE = 8;
-
-const byte VOL_LEN=36;
-uint8_t vol[VOL_LEN]={0x99,0x78,0x68,0x60,0x55,0x50,0x48,0x46,0x44,0x42,
-                      0x40,0x38,0x36,0x34,0x32,0x30,0x28,0x26,0x24,0x22,
-                      0x20,0x18,0x16,0x14,0x12,0x10,0x09,0x08,0x07,0x06,
-                      0x05,0x04,0x03,0x02,0x01,0x00};
-
 int vol_index = 15; // default volume index to restore
 
-
-struct CAN_COMMAND {
-  short address;
-  short bytes;
-  int putInTime;
-  int delayTime;
-  short payload[8];
-};
-
-CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
-  {1312,8,0,1000,{1,0,0,0,0,0,0,0}}, 
-  {305,6,0,100,{1,16,0,0,0,32}},
-  {485,7,0,500,{63,63,63,63,72,0,3}},
-  {741,4,0,1000,{0,0,0,0}},
-  {997,6,0,1000,{0,0,0,0,0,0}},
-  {357,4,0,100,{200,192,32,0}},
-  {805,3,0,500,{0,11,0}},
-  {869,5,0,500,{20,50,43,0,0}},
-};
-
-
-
-void crc(uint8_t *packet) {
-  uint8_t crc_reg=0xff,poly,i,j;
-  uint8_t bit_point, *byte_point;
-  for (i=0, byte_point=packet; i<10; ++i, ++byte_point) {
-    for (j=0, bit_point=0x80 ; j<8; ++j, bit_point>>=1) {
-      if (bit_point & *byte_point) { // case for new bit =1
-        if (crc_reg & 0x80) poly=1; // define the polynomial
-        else poly=0x1c;
-        crc_reg= ( (crc_reg << 1) | 1) ^ poly;
-      } else { // case for new bit =0
-        poly=0;
-        if (crc_reg & 0x80) poly=0x1d;
-        crc_reg= (crc_reg << 1) ^ poly;
-      }
-    }
-  }
-  packet[10]= ~crc_reg; // write use CRC
-}
-
-void fastSend(bool* packet, int packet_size, bool ack){
-  noInterrupts();
-  if (!ack){
-    digitalWrite2(AINETOUT, HIGH);
-    delayMicroseconds(32);
-    digitalWrite2(AINETOUT, LOW);
-    delayMicroseconds(16);
-  }
-  for (int i = 0; i< packet_size; i++){
-    if (packet[i] == 0){
-      digitalWrite2(AINETOUT, HIGH);
-      delayMicroseconds(14);
-      digitalWrite2(AINETOUT, LOW);
-      delayMicroseconds(8);
-    }
-    else {
-      digitalWrite2(AINETOUT, HIGH);
-      delayMicroseconds(5);
-      digitalWrite2(AINETOUT, LOW);
-      delayMicroseconds(18);
-    }
-  }
-  interrupts();
-}
-
-void sendAiNetCommand(byte * packet, int packet_size){
-  noInterrupts();
-  for (i=0;i<packet_size;i++) {
-    for (j=0;j<8;j++) {
-      type=(packet[i] & (1 << (7-j))) >> (7-j);
-      if (type==0) {
-        fast_byte_buffer[i*8+j] = 0;
-      }
-      else {
-        fast_byte_buffer[i*8+j] = 1;
-      }
-    }
-  }
-  fastSend(fast_byte_buffer, packet_size*8, 0);
-  interrupts();
-}
-
-void volUp(){
-  if ((vol_index+1) < 36){
-    vol_index = vol_index + 1;
-    ainet_commands[7][3] = vol_index;
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-    byte buf[1];
-    buf[0]= (byte) vol_index;
-    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    while (status !=0){
-      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    }
-  }
-}
-
-void volDown(){
-  if ((vol_index-1) > 0){
-    vol_index = vol_index - 1;
-    ainet_commands[7][3] = vol_index;
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-    byte buf[1];
-    buf[0]= (byte) vol_index;
-    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    while (status !=0){
-      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    }
-  }
-}
-
-void init_ainet_processor(){
-  if (ainetAck == true){ //start ainet processor init seq.
-    noInterrupts();
-    
-    ainetInit = true;
-    ainetAck = false;//we init it only once
-    
-    delay(2000);
-    Serial.println("int seq initiated");
-    sendAiNetCommand(ainet_commands[0],11);    
-    
-    delay(24);
-    sendAiNetCommand(ainet_commands[6],11);
-    
-    delay(65);
-    ainet_commands[12][3] = 0x2a;
-    crc(ainet_commands[12]);
-    sendAiNetCommand(ainet_commands[12],11);
-    
-    delay(90);
-    ainet_commands[7][3] = vol[0];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-    
-    delay(50);
-    sendAiNetCommand(ainet_commands[19],11);
-
-    delay(50);
-    sendAiNetCommand(ainet_commands[2],11);
-    
-    delay(60);
-    sendAiNetCommand(ainet_commands[8],11);
-    
-    delay(30);
-    sendAiNetCommand(ainet_commands[9],11);
-    
-    interrupts();
-
-    //restore volume to mid level
-    delay(5000);
-    Serial.println("Restore volume level");
-    ainet_commands[7][3] = vol[vol_index];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-  }
-}
 
 
 void isr_read_msg(){
@@ -254,7 +95,6 @@ void isr_read_msg(){
     }
   }
    
-  
   if (readyForNext == 0) {
     delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
@@ -268,6 +108,109 @@ void isr_read_msg(){
   interrupts();
 }
 
+
+
+
+
+//Volume control
+void volUp(){
+  if ((vol_index+1) < 36){
+    vol_index = vol_index + 1;
+    ainet_commands[7][3] = vol_index;
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    byte buf[1];
+    buf[0]= (byte) vol_index;
+    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    while (status !=0){
+      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    }
+  }
+}
+
+void volDown(){
+  if ((vol_index-1) > 0){
+    vol_index = vol_index - 1;
+    ainet_commands[7][3] = vol_index;
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    byte buf[1];
+    buf[0]= (byte) vol_index;
+    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    while (status !=0){
+      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    }
+  }
+}
+
+
+void vUpVdown(unsigned char *can_buf){
+  if (can_buf[0] == 4){
+    //volume down
+    digitalWrite(VDOWNPIN, HIGH);
+  }
+  if (can_buf[0] == 8){
+    //volume up
+    digitalWrite(VUPPIN, HIGH);
+  }
+  if (can_buf[0] == 0){
+    digitalWrite(VUPPIN, LOW);
+    digitalWrite(VDOWNPIN, LOW);
+  }
+}
+
+void processButtons(){
+  if (vUpButton.processState() == 1){
+    volUp();
+  }
+  if (vDownButton.processState() == 1){
+    volDown();
+  }
+}
+//End of volume control
+
+//aiNet Processor init
+void init_ainet_processor(){
+  if (ainetAck == true){ //start ainet processor init seq.
+    noInterrupts();
+    ainetInit = true;
+    ainetAck = false;//we init it only once
+    delay(2000);
+    Serial.println("int seq initiated");
+    sendAiNetCommand(ainet_commands[0],11);    
+    delay(24);
+    sendAiNetCommand(ainet_commands[6],11);
+    delay(65);
+    ainet_commands[12][3] = 0x2a;
+    crc(ainet_commands[12]);
+    sendAiNetCommand(ainet_commands[12],11);
+    delay(90);
+    ainet_commands[7][3] = vol[0];
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+    delay(50);
+    sendAiNetCommand(ainet_commands[19],11);
+    delay(50);
+    sendAiNetCommand(ainet_commands[2],11);    
+    delay(60);
+    sendAiNetCommand(ainet_commands[8],11);   
+    delay(30);
+    sendAiNetCommand(ainet_commands[9],11);   
+    interrupts();
+    //restore volume to mid level
+    delay(5000);
+    Serial.println("Restore volume level");
+    ainet_commands[7][3] = vol[vol_index];
+    crc(ainet_commands[7]);
+    sendAiNetCommand(ainet_commands[7],11);
+  }
+}
+//End of aiNet processor init
+
+
+
+
+//Read and write BT and CAN sections
 
 void readOrder(){
   if (!Serial1.available()) return;
@@ -342,29 +285,18 @@ void readOrder(){
   }
 }
 
-void vUpVdown(unsigned char *can_buf){
-  if (can_buf[0] == 4){
-    //volume down
-    volDown();
-  }
-  if (can_buf[0] == 8){
-    //volume up
-    volUp();
-  }
-}
-
 void readCan(){
   //read data from CAN Bus
   unsigned char len = 0;
   unsigned char can_buf[8]; 
   int canId;
   if(CAN_MSGAVAIL == CAN.checkReceive()){
-    vUpVdown(can_buf);
+   
     CAN.readMsgBuf(&len, can_buf);
     canId = (int) CAN.getCanId();
     if (canId == 0x21f && len != 0){
       //process volum up and down buttons
-      
+      vUpVdown(can_buf);
       uint8_t buffer[64];
       size_t message_length;
       bool status;
@@ -388,34 +320,7 @@ void readCan(){
     }
   }
 }
-
-void testReadCan(){
-  //read data from CAN Bus
-  unsigned char len = 3;
-  unsigned char can_buf[3]= {64,0,0}; 
-  int canId = 0x21f;
-  if(true){
-    if (canId == 0x21f && len != 0){
-      uint8_t buffer[64];
-      size_t message_length;
-      bool status;
-      pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
-      controlMessage message = controlMessage_init_zero;
-      message.can_address = canId;
-      message.can_payload[0].size = len;
-      for (int i = 0; i < len; i++){
-        message.can_payload[0].bytes[i] = can_buf[i];
-      }
-      message.can_payload_count = 1;
-      status = pb_encode(&stream, controlMessage_fields, &message);
-      sop[SOPLEN-1] = stream.bytes_written;
-
-      Serial1.write(sop,SOPLEN);
-      Serial1.write(buffer,stream.bytes_written);
-      Serial.println("Test packet was send");
-    }
-  }
-}
+//End of read and write BT and CAN Sections
 
 //some can heartbeat tools
 void sendCmd(CAN_COMMAND cmd){
@@ -450,6 +355,7 @@ void batch_send(CAN_COMMAND * cmds, int len){
     sendCmd(cmds[i]);
   }
 }
+//End of some can batch tools
 
  
 void setup() {
@@ -499,4 +405,5 @@ void loop() {
   readCan();
   readOrder(); 
   dispatcher();
+  processButtons();
 }
