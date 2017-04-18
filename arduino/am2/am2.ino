@@ -372,7 +372,7 @@ void setup() {
   pinMode2(AINETIN, INPUT); 
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
-  //attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
+  attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
   Serial1.begin(115200);
   //generate sop
