@@ -1,4 +1,4 @@
-const int HEARTBEAT_SIZE = 7;
+const int HEARTBEAT_SIZE = 8;
 
 struct CAN_COMMAND {
   short address;
@@ -16,6 +16,6 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
   {741,4,0,1000,{0,0,0,0}},
   {997,6,0,1000,{0,0,0,0,0,0}},
   {357,4,0,100,{200,192,32,0}},
-  //{805,3,0,500,{0,11,0}},
+  {805,3,0,500,{0,11,0}},
   {869,5,0,500,{20,50,43,0,0}},
 };

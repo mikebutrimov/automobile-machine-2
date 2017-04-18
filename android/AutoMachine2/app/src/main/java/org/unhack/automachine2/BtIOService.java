@@ -73,7 +73,7 @@ public class BtIOService extends Service {
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
             //registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
-            registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
+            //registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
         }
     };
 
@@ -239,9 +239,9 @@ public class BtIOService extends Service {
                 //Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
                 //sendBroadcast(dn40000);
 
-                //if (!mCurrentTrack.getBoolean("paused")) {
-                //    sendBroadcast(cmdIntentPosOn);
-                //}
+                if (!mCurrentTrack.getBoolean("paused")) {
+                    sendBroadcast(cmdIntentPosOn);
+                }
 
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);

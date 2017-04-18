@@ -9,13 +9,6 @@
 #include "can_commands.h"
 
 
-//virtual-real buttons
-//main purpose is to use once written code
-const int VUPPIN = 32;
-const int VDOWNPIN = 33;
-Button vUpButton = Button(VUPPIN);
-Button vDownButton = Button(VDOWNPIN);
-
 
 int counts = 0;
 byte bits = 0;
@@ -114,10 +107,12 @@ void isr_read_msg(){
 
 //Volume control
 void volUp(){
-  Serial.println("in Vup");
   if ((vol_index+1) < 36){
+    Serial.println("in Vup");
+    Serial.println(vol[vol_index]);
+    Serial.println(vol_index);
     vol_index = vol_index + 1;
-    ainet_commands[7][3] = vol_index;
+    ainet_commands[7][3] = vol[vol_index];
     crc(ainet_commands[7]);
     sendAiNetCommand(ainet_commands[7],11);
     byte buf[1];
@@ -132,10 +127,12 @@ void volUp(){
 }
 
 void volDown(){
-  Serial.println("in Vdown");
   if ((vol_index-1) > 0){
+        Serial.println("in VDown");
+    Serial.println(vol[vol_index]);
+    Serial.println(vol_index);
     vol_index = vol_index - 1;
-    ainet_commands[7][3] = vol_index;
+    ainet_commands[7][3] = vol[vol_index];
     crc(ainet_commands[7]);
     sendAiNetCommand(ainet_commands[7],11);
     byte buf[1];
@@ -153,26 +150,15 @@ void volDown(){
 void vUpVdown(unsigned char *can_buf){
   if (can_buf[0] == 4){
     //volume down
-    digitalWrite(VDOWNPIN, HIGH);
+    volDown();
   }
   if (can_buf[0] == 8){
     //volume up
-    digitalWrite(VUPPIN, HIGH);
-  }
-  if (can_buf[0] == 0){
-    digitalWrite(VUPPIN, LOW);
-    digitalWrite(VDOWNPIN, LOW);
+    volUp();
   }
 }
 
-void processButtons(){
-  if (vUpButton.processState() == 1){
-    volUp();
-  }
-  if (vDownButton.processState() == 1){
-    volDown();
-  }
-}
+
 //End of volume control
 
 //aiNet Processor init
@@ -283,7 +269,7 @@ void readOrder(){
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
         //while (status !=0){
-        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+         // status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
         //}
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
@@ -414,5 +400,4 @@ void loop() {
   readCan();
   readOrder(); 
   dispatcher();
-  processButtons();
 }
