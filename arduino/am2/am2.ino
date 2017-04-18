@@ -37,6 +37,11 @@ int readyForNext = 1;
 int messageLen = 0;
 const byte PLEN = 33;
 const byte SOPLEN = 35;
+<<<<<<< HEAD
+=======
+const int AINETIN = 20;
+const int AINETOUT = 21;
+>>>>>>> d9acb645d9d42d36d5f5d46f9083e943ecdbcbaa
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
@@ -114,6 +119,7 @@ void isr_read_msg(){
 
 //Volume control
 void volUp(){
+  Serial.println("in Vup");
   if ((vol_index+1) < 36){
     vol_index = vol_index + 1;
     ainet_commands[7][3] = vol_index;
@@ -125,10 +131,13 @@ void volUp(){
     while (status !=0){
       status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
+    buf[0] = (byte) (224+vol_index);
+    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
 void volDown(){
+  Serial.println("in Vdown");
   if ((vol_index-1) > 0){
     vol_index = vol_index - 1;
     ainet_commands[7][3] = vol_index;
@@ -140,6 +149,8 @@ void volDown(){
     while (status !=0){
       status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
+    buf[0] = (byte)(224+vol_index);
+    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
@@ -209,6 +220,72 @@ void init_ainet_processor(){
 
 
 
+<<<<<<< HEAD
+=======
+void isr_read_msg(){
+  if (!readyForNext) return;
+  noInterrupts();
+  //here we start with RISING on SOF but must check it
+  while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
+    counts++;
+  }
+  if (counts<SOF_THRESHOLD){//need to do some finetuning
+    return;
+  }
+  //SOF ends with LOW reading. wait for HIGH again and count it
+  for (int i = 0; i< bytes*8; i++){
+    while (digitalRead2(AINETIN) == LOW){
+    }
+    counts = 0;
+    while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ){
+      counts++;
+    }
+    if (counts < BITVAL_THRESHOLD_HIGH){
+      vals[i] = 1;
+    }
+    else {
+      vals[i] = 0;
+    }
+    byte_val = (byte_val<<1)|vals[i];
+    if (i % 8 ==7){
+      byte_vals[i/8] = byte_val;
+      byte_val = 0;
+    }
+  }
+  readyForNext = 0;
+  
+  if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
+    //we must count 40 micros from the front of last impulse
+    //so it depends on value of last bit 
+    if (vals[87] == 0){
+      delayMicroseconds(23);
+      }
+    else {
+      delayMicroseconds(31);
+    }
+    //send ac
+    fastSend(ack_buffer,8,1);
+    //start init seq. by setting ainetAck to true
+    //this means that we get request from processor to headunit (from 0x40 to 0x02)
+    if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67){
+      ainetAck = true;
+    }
+  }
+   
+  
+  if (readyForNext == 0) {
+    //delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+    //some commented out code to output last captured packet
+    for (int i = 0; i< bytes; i++){
+      Serial.print(byte_vals[i],HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+    readyForNext = 1;
+  }
+  interrupts();
+}
+>>>>>>> d9acb645d9d42d36d5f5d46f9083e943ecdbcbaa
 
 //Read and write BT and CAN sections
 
@@ -364,8 +441,8 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
-  //Serial.begin(115200);
-  //Serial1.begin(115200);
+  Serial.begin(115200);
+  Serial1.begin(115200);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
     sop[i] = 0;
