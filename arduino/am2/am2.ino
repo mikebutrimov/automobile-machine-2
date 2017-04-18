@@ -1,5 +1,4 @@
-//#define GPIO2_PREFER_SPEED 1
-//#include "arduino2.h"
+
 #include <mcp_can.h>  
 #include <pb_encode.h>
 #include <pb_decode.h>
