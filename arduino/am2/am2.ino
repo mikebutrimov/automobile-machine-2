@@ -46,13 +46,14 @@ void isr_read_msg(){
     counts++;
   }
   if (counts<SOF_THRESHOLD){//need to do some finetuning
+    Serial.println("NOT SOF");
     return;
   }
   counts = 0;
   while (digitalRead2(AINETIN) == LOW && counts < BRAKE){
      counts++;
   }
-  
+  Serial.println("counts: " + counts);
   //SOF ends with LOW reading. wait for HIGH again and count it
   for (int i = 0; i< bytes*8; i++){
     counts = 0;
