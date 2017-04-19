@@ -52,7 +52,7 @@ void fastSend(bool* packet, int packet_size, bool ack){
 }
 
 void sendAiNetCommand(byte * packet, int packet_size){
-  noInterrupts();
+  //noInterrupts();
   for (i=0;i<packet_size;i++) {
     for (j=0;j<8;j++) {
       type=(packet[i] & (1 << (7-j))) >> (7-j);
@@ -65,7 +65,7 @@ void sendAiNetCommand(byte * packet, int packet_size){
     }
   }
   fastSend(fast_byte_buffer, packet_size*8, 0);
-  interrupts();
+  //interrupts();
 }
 
 

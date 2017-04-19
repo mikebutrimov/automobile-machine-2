@@ -41,6 +41,7 @@ int vol_index = 15; // default volume index to restore
 void isr_read_msg(){
   if (!readyForNext) return;
   noInterrupts();
+  Serial.println("11111Begin of isr");
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
@@ -69,7 +70,7 @@ void isr_read_msg(){
     }
   }
   readyForNext = 0;
-  
+  Serial.println("222222before ack part");
   if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit 
@@ -86,19 +87,21 @@ void isr_read_msg(){
     if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67){
       ainetAck = true;
     }
+    Serial.println("3333333after ack part");
   }
    
   if (readyForNext == 0) {
     delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
-    //for (int i = 0; i< bytes; i++){
-    //  Serial.print(byte_vals[i],HEX);
-    //  Serial.print(" ");
-    //}
-    //Serial.println();
+    for (int i = 0; i< bytes; i++){
+      Serial.print(byte_vals[i],HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
     readyForNext = 1;
   }
   interrupts();
+  Serial.println("3333333after ack part");
 }
 
 
