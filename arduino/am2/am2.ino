@@ -20,10 +20,10 @@ byte sop[35];
 
 long last = 0;
 
-volatile byte byte_val = 0;
-volatile byte vals[bytes*8];
-volatile byte byte_vals[bytes];
-volatile bool ack_buffer[8];
+byte byte_val = 0;
+byte vals[bytes*8];
+byte byte_vals[bytes];
+bool ack_buffer[8];
 volatile bool ainetInit = false;
 volatile bool ainetAck = false;
 int readyForNext = 1;
@@ -31,7 +31,7 @@ int messageLen = 0;
 const byte PLEN = 33;
 const byte SOPLEN = 35;
 const int BITVAL_THRESHOLD_HIGH = 6;
-const int SOF_THRESHOLD = 15;
+const int SOF_THRESHOLD = 9;
 const int BRAKE = 10000;
 MCP_CAN CAN(10); 
 int vol_index = 15; // default volume index to restore
@@ -39,22 +39,27 @@ int vol_index = 15; // default volume index to restore
 
 
 void isr_read_msg(){
-  Serial.println("11111Begin of isr");
+  noInterrupts();
+  //Serial.println("11111Begin of isr");
   counts = 0;
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
   }
+  //Serial.println("counts before sof threshold  ");
+  Serial.println(counts);
+  //Serial.println();
   if (counts<SOF_THRESHOLD){//need to do some finetuning
-    Serial.println("NOT SOF");
+    //Serial.println("NOT SOF");
     return;
   }
   counts = 0;
   while (digitalRead2(AINETIN) == LOW && counts < BRAKE){
-     counts++;
+     //counts++;
   }
-  Serial.println("counts: " + counts);
+  //Serial.println("counts: " + counts);
   //SOF ends with LOW reading. wait for HIGH again and count it
+  Serial.println("before main cycle");
   for (int i = 0; i< bytes*8; i++){
     counts = 0;
     while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ){
@@ -72,8 +77,9 @@ void isr_read_msg(){
       byte_val = 0;
     }
   }
-  Serial.println("222222before ack part");
-  if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
+  //Serial.println("222222before ack part");
+  if (byte_vals[0] == 0x02){
+    Serial.println("in 0x02 part");
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit 
     if (vals[87] == 0){
@@ -89,15 +95,16 @@ void isr_read_msg(){
     if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67){
       ainetAck = true;
     }
-    Serial.println("3333333after ack part");
+    //Serial.println("3333333after ack part");
   }
   delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
   for (int i = 0; i< bytes; i++){
     Serial.print(byte_vals[i],HEX);
     Serial.print(" ");
   }
-  Serial.println();
-  Serial.println("3333333after ack part");
+  //Serial.println();
+  //Serial.println("3333333after ack part");
+  interrupts();
 }
 
 
@@ -106,7 +113,7 @@ void isr_read_msg(){
 
 //Volume control
 void volUp(){
-  if ((vol_index+1) < 36){
+  if ((vol_index+1) <= 36){
     Serial.println("in Vup");
     Serial.println(vol[vol_index]);
     Serial.println(vol_index);
@@ -126,7 +133,7 @@ void volUp(){
 }
 
 void volDown(){
-  if ((vol_index-1) > 0){
+  if ((vol_index-1) >= 0){
         Serial.println("in VDown");
     Serial.println(vol[vol_index]);
     Serial.println(vol_index);
