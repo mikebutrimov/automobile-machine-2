@@ -39,9 +39,8 @@ int vol_index = 15; // default volume index to restore
 
 
 void isr_read_msg(){
-  if (!readyForNext) return;
-  noInterrupts();
   Serial.println("11111Begin of isr");
+  counts = 0;
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
@@ -49,10 +48,13 @@ void isr_read_msg(){
   if (counts<SOF_THRESHOLD){//need to do some finetuning
     return;
   }
+  counts = 0;
+  while (digitalRead2(AINETIN) == LOW && counts < BRAKE){
+     counts++;
+  }
+  
   //SOF ends with LOW reading. wait for HIGH again and count it
   for (int i = 0; i< bytes*8; i++){
-    while (digitalRead2(AINETIN) == LOW){
-    }
     counts = 0;
     while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ){
       counts++;
@@ -69,7 +71,6 @@ void isr_read_msg(){
       byte_val = 0;
     }
   }
-  readyForNext = 0;
   Serial.println("222222before ack part");
   if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
     //we must count 40 micros from the front of last impulse
@@ -89,18 +90,12 @@ void isr_read_msg(){
     }
     Serial.println("3333333after ack part");
   }
-   
-  if (readyForNext == 0) {
-    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
-    //some commented out code to output last captured packet
-    for (int i = 0; i< bytes; i++){
-      Serial.print(byte_vals[i],HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
-    readyForNext = 1;
+  delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
+  for (int i = 0; i< bytes; i++){
+    Serial.print(byte_vals[i],HEX);
+    Serial.print(" ");
   }
-  interrupts();
+  Serial.println();
   Serial.println("3333333after ack part");
 }
 
