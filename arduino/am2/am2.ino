@@ -10,7 +10,7 @@
 
 
 
-int counts = 0;
+volatile int counts = 0;
 byte bits = 0;
 const char BYTES = 8;
 //const int bytes = 11;
@@ -20,12 +20,12 @@ byte sop[35];
 
 long last = 0;
 
-byte byte_val = 0;
-byte vals[bytes*8];
-byte byte_vals[bytes];
-bool ack_buffer[8];
-bool ainetInit = false;
-bool ainetAck = false;
+volatile byte byte_val = 0;
+volatile byte vals[bytes*8];
+volatile byte byte_vals[bytes];
+volatile bool ack_buffer[8];
+volatile bool ainetInit = false;
+volatile bool ainetAck = false;
 int readyForNext = 1;
 int messageLen = 0;
 const byte PLEN = 33;
@@ -162,7 +162,6 @@ void vUpVdown(unsigned char *can_buf){
 //aiNet Processor init
 void init_ainet_processor(){
   if (ainetAck == true){ //start ainet processor init seq.
-    noInterrupts();
     ainetInit = true;
     ainetAck = false;//we init it only once
     delay(2000);
@@ -186,7 +185,6 @@ void init_ainet_processor(){
     sendAiNetCommand(ainet_commands[8],11);   
     delay(30);
     sendAiNetCommand(ainet_commands[9],11);   
-    interrupts();
     //restore volume to mid level
     delay(5000);
     Serial.println("Restore volume level");
