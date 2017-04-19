@@ -41,7 +41,6 @@ int vol_index = 15; // default volume index to restore
 void isr_read_msg(){
   if (!readyForNext) return;
   noInterrupts();
-  Serial.println("11111Begin of isr");
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
@@ -51,8 +50,12 @@ void isr_read_msg(){
   }
   //SOF ends with LOW reading. wait for HIGH again and count it
   for (int i = 0; i< bytes*8; i++){
+    counts = 0;
     while (digitalRead2(AINETIN) == LOW){
+      counts++;
+      if (counts > BRAKE) return;
     }
+    
     counts = 0;
     while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ){
       counts++;
@@ -70,8 +73,7 @@ void isr_read_msg(){
     }
   }
   readyForNext = 0;
-  Serial.println("222222before ack part");
-  if (byte_vals[0] == 0x02 || byte_vals[0] == 0x50){
+  if (byte_vals[0] == 0x02){
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit 
     if (vals[87] == 0){
@@ -87,7 +89,6 @@ void isr_read_msg(){
     if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67){
       ainetAck = true;
     }
-    Serial.println("3333333after ack part");
   }
    
   if (readyForNext == 0) {
@@ -101,7 +102,6 @@ void isr_read_msg(){
     readyForNext = 1;
   }
   interrupts();
-  Serial.println("3333333after ack part");
 }
 
 
@@ -120,18 +120,17 @@ void volUp(){
     sendAiNetCommand(ainet_commands[7],11);
     byte buf[1];
     buf[0]= (byte) vol_index;
-    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    while (status !=0){
-      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    if (vol_index < 32){
+      byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+      buf[0] = (byte) (224+vol_index);
+      CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
-    buf[0] = (byte) (224+vol_index);
-    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
 void volDown(){
-  if ((vol_index-1) > 0){
-        Serial.println("in VDown");
+  if ((vol_index-1) >= 0){
+    Serial.println("in VDown");
     Serial.println(vol[vol_index]);
     Serial.println(vol_index);
     vol_index = vol_index - 1;
@@ -140,12 +139,11 @@ void volDown(){
     sendAiNetCommand(ainet_commands[7],11);
     byte buf[1];
     buf[0]= (byte) vol_index;
-    byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-    while (status !=0){
-      status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+    if (vol_index < 32){
+      byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
+      buf[0] = (byte)(224+vol_index);
+      CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
-    buf[0] = (byte)(224+vol_index);
-    CAN.sendMsgBuf(0x1a5, 0, 1, buf);
   }
 }
 
@@ -167,7 +165,6 @@ void vUpVdown(unsigned char *can_buf){
 //aiNet Processor init
 void init_ainet_processor(){
   if (ainetAck == true){ //start ainet processor init seq.
-    noInterrupts();
     ainetInit = true;
     ainetAck = false;//we init it only once
     delay(2000);
@@ -191,7 +188,6 @@ void init_ainet_processor(){
     sendAiNetCommand(ainet_commands[8],11);   
     delay(30);
     sendAiNetCommand(ainet_commands[9],11);   
-    interrupts();
     //restore volume to mid level
     delay(5000);
     Serial.println("Restore volume level");
@@ -271,9 +267,9 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //while (status !=0){
-         // status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //}
+        while (status !=0){
+          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        }
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
         //Serial.println();
