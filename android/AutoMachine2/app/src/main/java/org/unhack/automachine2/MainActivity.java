@@ -99,7 +99,9 @@ public class MainActivity extends AppCompatActivity {
 
                 for (BluetoothDevice device : pairedDevices) {
                     // Add the name and address to an array adapter to show in a ListView
-                    mBtHashMap.put(device.getName(),device);
+                    if (device.getName().contains("HC")) {
+                        mBtHashMap.put(device.getName(), device);
+                    }
                 }
                 final ArrayAdapter<String> mBtAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item,new ArrayList<String>(mBtHashMap.keySet()));
 

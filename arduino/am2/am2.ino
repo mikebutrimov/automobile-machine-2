@@ -5,7 +5,6 @@
 #include <pb_decode.h>
 #include "msg.pb.h"
 #include "ainet.h"
-#include "Button.h"
 #include "can_commands.h"
 
 
@@ -82,7 +81,7 @@ void isr_read_msg(){
     else {
       delayMicroseconds(31);
     }
-    //send ac
+    //send ack
     fastSend(ack_buffer,8,1);
     //start init seq. by setting ainetAck to true
     //this means that we get request from processor to headunit (from 0x40 to 0x02)
@@ -226,11 +225,11 @@ void readOrder(){
         zero_count = 0;
       }
     }
-  else {
+    else {
+   }
   }
-}
   while (Serial1.available() < messageLen){
-  }
+    }
   //Serial.println("__________________");
   byte * proto_buf_message = new byte[messageLen];
   byte received = Serial1.readBytes(proto_buf_message, messageLen);
@@ -243,22 +242,15 @@ void readOrder(){
     status = pb_decode(&stream, controlMessage_fields, &message);
     if (!status){
       Serial.println("Error decoding message");
+      goto EMERGENCY_HALT;
     }
-    //Serial.println("Decoded message:");
-    //Serial.print("Addr : ");
-    //Serial.println(message.can_address, HEX);
-    //Serial.print("Payload count: ");
-    //Serial.println(message.can_payload_count, DEC);
+    else {
     for (int i = 0; i< message.can_payload_count; i++){
-    //  Serial.print("Payload ");
-    //  Serial.print(i, DEC);
-    //  Serial.print(" : ");
       for (int j = 0; j<message.can_payload[i].size ; j++){
         Serial.print (message.can_payload[i].bytes[j], DEC);
         Serial.print (" ");
       }
       Serial.println();
-    //  last = millis();
     }
 
     //retransmitt message to can
@@ -267,14 +259,22 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        while (status !=0){
-          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        }
+        //while (status !=0){
+        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        //}
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
         //Serial.println();
       }
     }
+  }
+  }
+  else {
+    
+     EMERGENCY_HALT:
+      Serial.println("emergency halt");
+      void(* resetFunc) (void) = 0;
+      resetFunc();
   }
 }
 
@@ -359,7 +359,7 @@ void setup() {
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
-  Serial1.begin(115200);
+  Serial1.begin(9600);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
     sop[i] = 0;

@@ -51,7 +51,6 @@ public class BtIOService extends Service {
             Msg.controlMessage message = Utils.createMessage(address,payload);
             Log.d("RECEIVER", "MESSAGE: " + message.toString());
             String mutator = intent.getStringExtra("mutator");
-
             VehicleCommand mVehicleCommand = new VehicleCommand(repeat,interval,message);
             mVehicleCommand.setMutator(mutator);
             Log.d("BOOLEAN", "Boolean extra: " + String.valueOf(delete));
@@ -73,7 +72,7 @@ public class BtIOService extends Service {
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
             //registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
-            //registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
+            registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
         }
     };
 
@@ -89,18 +88,16 @@ public class BtIOService extends Service {
     private BroadcastReceiver mTrackPosReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("TRACKPOS", "fired");
-            int pos =  intent.getIntExtra("pos",0);
-            Log.d("TRACKPOS", "Position in sec : " + String.valueOf(pos));
+            int pos = intent.getIntExtra("pos", 0);
             int min = pos / 60;
             int sec = pos % 60;
-            byte[] can_payload = {1, (byte)255, (byte)255, 0, 0,  0};
+            byte[] can_payload = {1, (byte) 255, (byte) 255, 0, 0, 0};
             can_payload[3] = (byte) min;
             can_payload[4] = (byte) sec;
-            Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
-            Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
+            Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
+            Intent cmdIntentPosOn = Utils.genereateVhclCmd(933, can_payload, true, 1000, false, "trackPosition");
             sendBroadcast(cmdIntentPosOff);
-            //sendBroadcast(cmdIntentPosOn);
+            sendBroadcast(cmdIntentPosOn);
         }
     };
 
@@ -109,11 +106,12 @@ public class BtIOService extends Service {
         public void onReceive(Context context, Intent intent) {
             Log.d("TRACKSTATUS", "fired");
             byte[] can_payload = {1, (byte)255, (byte)255, 0, 0,  0};
-            if (intent.getBooleanExtra("paused", true)) {
+            if (intent.getBooleanExtra("paused", false)) {
+                Log.d("TRACKSTATUS", "Track paused");
                 Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
-                sendBroadcast(cmdIntentPosOff);
                 sendBroadcast(cmdPlayIntentOff);
                 sendBroadcast(cmdPauseIntentOn);
+                sendBroadcast(cmdIntentPosOff);
 
 
             }
@@ -213,6 +211,7 @@ public class BtIOService extends Service {
             unregisterReceiver(mConnectedThreadIsReady);
             unregisterReceiver(mTrackReceiver);
             unregisterReceiver(mTrackPosReceiver);
+            unregisterReceiver(mTrackStatusReceiver);
         }
         catch (Exception e){
             Log.d("BTIOSErvice","suppress exception on exit while unregistering recievers ");
@@ -230,16 +229,12 @@ public class BtIOService extends Service {
                 currentTrackPosition = position;
                 byte[] can_payload = {0, (byte)255, (byte)255, 0, 0,  0};
                 can_payload[0] = (byte) position;
-                Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
-                Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
-                //sendBroadcast(cmdIntentPosOff);
                 //byte[] can_40000 = {4,0,0,0,(byte) position};
                 //Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
                 //sendBroadcast(dn40000);
+                //Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
+                //sendBroadcast(cmdIntentPosOff);
 
-                if (!mCurrentTrack.getBoolean("paused")) {
-                    //sendBroadcast(cmdIntentPosOn);
-                }
 
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
