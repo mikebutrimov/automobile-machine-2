@@ -90,8 +90,6 @@ public class BtIOService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d("TRACKPOS", "fired");
-
-
             int pos =  intent.getIntExtra("pos",0);
             Log.d("TRACKPOS", "Position in sec : " + String.valueOf(pos));
             int min = pos / 60;
@@ -102,7 +100,7 @@ public class BtIOService extends Service {
             Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
             Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
             sendBroadcast(cmdIntentPosOff);
-            sendBroadcast(cmdIntentPosOn);
+            //sendBroadcast(cmdIntentPosOn);
         }
     };
 
@@ -234,13 +232,13 @@ public class BtIOService extends Service {
                 can_payload[0] = (byte) position;
                 Intent cmdIntentPosOff = Utils.genereateVhclCmd(933,can_payload,true,1000,true,"trackPosition");
                 Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
-                sendBroadcast(cmdIntentPosOff);
+                //sendBroadcast(cmdIntentPosOff);
                 //byte[] can_40000 = {4,0,0,0,(byte) position};
                 //Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
                 //sendBroadcast(dn40000);
 
                 if (!mCurrentTrack.getBoolean("paused")) {
-                    sendBroadcast(cmdIntentPosOn);
+                    //sendBroadcast(cmdIntentPosOn);
                 }
 
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
