@@ -35,7 +35,7 @@ const int BRAKE = 10000;
 MCP_CAN CAN(10); 
 int vol_index = 15; // default volume index to restore
 
-
+ void(* resetFunc) (void) = 0;
 
 void isr_read_msg(){
   if (!readyForNext) return;
@@ -259,9 +259,9 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //while (status !=0){
-        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //}
+        while (status !=0){
+          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        }
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
         //Serial.println();
@@ -270,12 +270,12 @@ void readOrder(){
   }
   }
   else {
-    
+    resetFunc();
      EMERGENCY_HALT:
       Serial.println("emergency halt");
-      void(* resetFunc) (void) = 0;
       resetFunc();
   }
+  delete[] proto_buf_message;
 }
 
 void readCan(){
@@ -358,7 +358,7 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
-  Serial.begin(115200);
+  //Serial.begin(115200);
   Serial1.begin(9600);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
@@ -397,6 +397,8 @@ void setup() {
 void loop() {
   init_ainet_processor();
   readCan();
+  dispatcher();
   readOrder(); 
   dispatcher();
+
 }
