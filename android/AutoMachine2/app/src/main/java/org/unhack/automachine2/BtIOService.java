@@ -27,6 +27,7 @@ public class BtIOService extends Service {
     public BluetoothAdapter mBluetoothAdapter;
     public ConnectThread connect;
     public VehicleControlThread mVehicleControlThread;
+    public AMTrack mAMCurrentTrack = new AMTrack(getApplicationContext());
     private Intent mTrackIntent;
     private Bundle mCurrentTrack;
     private static int currentTrackPosition = 0;
@@ -89,44 +90,18 @@ public class BtIOService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             int pos = intent.getIntExtra("pos", 0);
-            int min = pos / 60;
-            int sec = pos % 60;
-            byte[] can_payload = {1, (byte) 255, (byte) 255, 0, 0, 0};
-            can_payload[3] = (byte) min;
-            can_payload[4] = (byte) sec;
-            Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
-            Intent cmdIntentPosOn = Utils.genereateVhclCmd(933, can_payload, true, 1000, false, "trackPosition");
-            sendBroadcast(cmdIntentPosOff);
-            sendBroadcast(cmdIntentPosOn);
+            mAMCurrentTrack.setPosition(pos);
         }
     };
 
     private BroadcastReceiver mTrackStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("TRACKSTATUS", "fired");
-            byte[] can_payload = {1, (byte)255, (byte)255, 0, 0,  0};
             if (intent.getBooleanExtra("paused", false)) {
-                Log.d("TRACKSTATUS", "Track paused");
-                Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
-                sendBroadcast(cmdPlayIntentOff);
-                sendBroadcast(cmdPauseIntentOn);
-                sendBroadcast(cmdIntentPosOff);
-
-
+                mAMCurrentTrack.pause();
             }
             else {
-                sendBroadcast(cmdPauseIntentOff);
-                sendBroadcast(cmdPlayIntentOn);
-                int pos = intent.getIntExtra("pos",0);
-                int min = pos / 60;
-                int sec = pos % 60;
-                can_payload[0] = (byte) currentTrackPosition;
-                can_payload[3] = (byte) min;
-                can_payload[4] = (byte) sec;
-                Log.d("TRACKSTATUS", "Position in sec : " + String.valueOf(pos));
-                Intent cmdIntentPosOn = Utils.genereateVhclCmd(933,can_payload,true,1000,false,"trackPosition");
-                sendBroadcast(cmdIntentPosOn);
+                mAMCurrentTrack.play();
             }
         }
     };
@@ -227,15 +202,7 @@ public class BtIOService extends Service {
             if(mCurrentTrack != null) {
                 int position = mCurrentTrack.getInt(PowerampAPI.Track.POS_IN_LIST);
                 currentTrackPosition = position;
-                byte[] can_payload = {0, (byte)255, (byte)255, 0, 0,  0};
-                can_payload[0] = (byte) position;
-                //byte[] can_40000 = {4,0,0,0,(byte) position};
-                //Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
-                //sendBroadcast(dn40000);
-                //Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
-                //sendBroadcast(cmdIntentPosOff);
-
-
+                mAMCurrentTrack.setPositionInList(currentTrackPosition);
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
                 String album = mCurrentTrack.getString(PowerampAPI.Track.ALBUM);
