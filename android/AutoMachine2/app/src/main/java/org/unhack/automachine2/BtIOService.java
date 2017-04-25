@@ -71,7 +71,7 @@ public class BtIOService extends Service {
             mVehicleControlThread = new VehicleControlThread(getApplicationContext(),connect.getConnectedThread());
             mVehicleControlThread.start();
             registerReceiver(mTrackReceiver,new IntentFilter(PowerampAPI.ACTION_TRACK_CHANGED));
-            //registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
+            registerReceiver(mTrackPosReceiver, new IntentFilter(PowerampAPI.ACTION_TRACK_POS_SYNC));
             registerReceiver(mTrackStatusReceiver, new IntentFilter(PowerampAPI.ACTION_STATUS_CHANGED));
         }
     };
@@ -268,7 +268,7 @@ public class BtIOService extends Service {
 
                 int can_address = 0xa4;
                 //rude fisrt string formatting
-                byte msg[] = {16,  44,  32,  0, 88,  19,  (byte)artist.charAt(0),  (byte)artist.charAt(1)};
+                byte msg[] = {16,  44,  32,  0, (byte)152,  (byte) position,  (byte)artist.charAt(0),  (byte)artist.charAt(1)};
                 //msg[3] = (byte) position;
                 //msg[6] = track_info_as_array[0];
                 //msg[7] = track_info_as_array[1];

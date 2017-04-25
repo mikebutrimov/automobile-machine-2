@@ -259,9 +259,9 @@ void readOrder(){
       //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
         byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        while (status !=0){
-          status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        }
+        //while (status !=0){
+        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        //}
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
         //Serial.println();
