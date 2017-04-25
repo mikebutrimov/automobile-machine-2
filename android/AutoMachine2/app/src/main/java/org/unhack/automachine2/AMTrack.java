@@ -26,13 +26,19 @@ public class AMTrack {
     }
 
     public void play(){
-        this.context.sendBroadcast(cmdPlayIntentOff);
-        this.context.sendBroadcast(cmdPauseIntentOn);
+        this.context.sendBroadcast(cmdPauseIntentOff);
+        this.context.sendBroadcast(cmdPlayIntentOn);
         this.isPlaying = true;
     }
     public void pause() {
-        this.context.sendBroadcast(cmdPauseIntentOff);
-        this.context.sendBroadcast(cmdPlayIntentOn);
+        this.context.sendBroadcast(cmdPlayIntentOff);
+        this.context.sendBroadcast(cmdPauseIntentOn);
+        byte[] can_payload = {1, (byte) 255, (byte) 255, 0, 0, 0};
+        can_payload[0] = (byte) this.positionInList;
+        Intent cmdIntentPosOff = Utils.genereateVhclCmd(933, can_payload, true, 1000, true, "trackPosition");
+        this.context.sendBroadcast(cmdIntentPosOff);
+
+
         this.isPlaying = false;
     }
 

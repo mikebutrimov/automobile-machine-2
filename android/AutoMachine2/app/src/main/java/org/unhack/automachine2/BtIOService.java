@@ -27,7 +27,7 @@ public class BtIOService extends Service {
     public BluetoothAdapter mBluetoothAdapter;
     public ConnectThread connect;
     public VehicleControlThread mVehicleControlThread;
-    public AMTrack mAMCurrentTrack = new AMTrack(getApplicationContext());
+    public AMTrack mAMCurrentTrack = new AMTrack(this);
     private Intent mTrackIntent;
     private Bundle mCurrentTrack;
     private static int currentTrackPosition = 0;
@@ -97,7 +97,7 @@ public class BtIOService extends Service {
     private BroadcastReceiver mTrackStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getBooleanExtra("paused", false)) {
+            if (intent.getBooleanExtra("paused", true)) {
                 mAMCurrentTrack.pause();
             }
             else {
