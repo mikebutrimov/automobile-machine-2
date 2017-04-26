@@ -203,83 +203,90 @@ public class BtIOService extends Service {
                 int position = mCurrentTrack.getInt(PowerampAPI.Track.POS_IN_LIST);
                 currentTrackPosition = position;
                 mAMCurrentTrack.setPositionInList(currentTrackPosition);
+
+                byte[] can_40000 = {4,0,0,0,(byte) position};
+                Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
+                sendBroadcast(dn40000);
+
+
+
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);
                 String artist = mCurrentTrack.getString(PowerampAPI.Track.ARTIST);
                 String album = mCurrentTrack.getString(PowerampAPI.Track.ALBUM);
                 String title = mCurrentTrack.getString(PowerampAPI.Track.TITLE);
-                Log.d("POWERAMP!", " " +position + " " + artist + " " + album + " " + title);
+                Log.d("POWERAMP!", " " + position + " " + artist + " " + album + " " + title);
                 //HARDCODED
                 //PRIBITO GVOZDIAMY (tm)
                 byte[] track_info_as_array = new byte[40];
 
-                if (title.length() >= 20){
-                    title = title.substring(0,20);
+                if (title.length() >= 20) {
+                    title = title.substring(0, 20);
                 }
-                if (artist.length() >= 20){
-                    artist = artist.substring(0,20);
+                if (artist.length() >= 20) {
+                    artist = artist.substring(0, 20);
                 }
-                for (int i = 0; i< 20; i++){
+                for (int i = 0; i < 20; i++) {
                     try {
                         track_info_as_array[i] = (byte) artist.charAt(i);
-                    }
-                    catch (StringIndexOutOfBoundsException e){
+                    } catch (StringIndexOutOfBoundsException e) {
                         track_info_as_array[i] = 0;
                     }
                     try {
                         track_info_as_array[20 + i] = (byte) title.charAt(i);
-                    }
-                    catch (StringIndexOutOfBoundsException e){
+                    } catch (StringIndexOutOfBoundsException e) {
                         track_info_as_array[20 + i] = 0;
                     }
                 }
 
                 int can_address = 0xa4;
                 //rude fisrt string formatting
-                byte msg[] = {16,  44,  32,  0, (byte)152,  (byte) position,  (byte)artist.charAt(0),  (byte)artist.charAt(1)};
-                //msg[3] = (byte) position;
-                //msg[6] = track_info_as_array[0];
-                //msg[7] = track_info_as_array[1];
+                byte msg[] = {16, 44, 32, 0, (byte) 136, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
                 Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 cmdUpIntent.putExtra("address", can_address);
-                cmdUpIntent.putExtra("repeat",false);
-                cmdUpIntent.putExtra("interval",0);
+                cmdUpIntent.putExtra("repeat", false);
+                cmdUpIntent.putExtra("interval", 0);
                 ArrayList payload = new ArrayList();
                 payload.add(msg);
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(cmdUpIntent);
 
+                byte _09f_control[] = {48,0,10};
+                Intent _9fintent = Utils.genereateVhclCmd(0x9f,_09f_control,false,1000,false,"");
+                sendBroadcast(_9fintent);
 
-                byte[] prefix = {33,34,35,36,37,38};
-                int j = 2;
-                for (int i = 0; i< 6; i++){
-                    if (i > 4){
-                        msg = new byte[4];
-                        msg[0] = prefix[i];
-                        for (int k = 1; k< 4; k++){
-                            msg[k] =  track_info_as_array[j];
-                            j++;
+
+
+
+                    byte[] prefix = {33, 34, 35, 36, 37, 38};
+                    int j = 2;
+                    for (int i = 0; i < 6; i++) {
+                        if (i > 4) {
+                            msg = new byte[4];
+                            msg[0] = prefix[i];
+                            for (int k = 1; k < 4; k++) {
+                                msg[k] = track_info_as_array[j];
+                                j++;
+                            }
+                        } else {
+                            msg = new byte[8];
+                            msg[0] = prefix[i];
+                            for (int k = 1; k < 8; k++) {
+                                msg[k] = track_info_as_array[j];
+                                j++;
+                            }
                         }
+
+
+                        cmdUpIntent.putExtra("address", can_address);
+                        cmdUpIntent.putExtra("repeat", false);
+                        cmdUpIntent.putExtra("interval", 0);
+                        payload = new ArrayList();
+                        payload.add(msg);
+                        cmdUpIntent.putParcelableArrayListExtra("payload", payload);
+                        sendBroadcast(cmdUpIntent);
                     }
-                    else {
-                        msg = new byte[8];
-                        msg[0] = prefix[i];
-                        for (int k = 1; k< 8; k++){
-                            msg[k] =  track_info_as_array[j];
-                            j++;
-                        }
-                    }
-
-
-
-                    cmdUpIntent.putExtra("address", can_address);
-                    cmdUpIntent.putExtra("repeat",false);
-                    cmdUpIntent.putExtra("interval",0);
-                    payload = new ArrayList();
-                    payload.add(msg);
-                    cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                    sendBroadcast(cmdUpIntent);
                 }
-            }
+
         }
     }
 }

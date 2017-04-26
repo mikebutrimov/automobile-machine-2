@@ -134,7 +134,7 @@ void loop()
       sec++;
       cd_time[4] = char(sec);
       //Serial.println(sec);
-      CAN.sendMsgBuf(933, 0, 6, cd_time);
+      //CAN.sendMsgBuf(933, 0, 6, cd_time);
     }
 
 

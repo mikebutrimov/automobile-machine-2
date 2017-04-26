@@ -25,6 +25,7 @@ byte byte_vals[bytes];
 bool ack_buffer[8];
 bool ainetInit = false;
 bool ainetAck = false;
+bool startup = false;
 int readyForNext = 1;
 int messageLen = 0;
 const byte PLEN = 33;
@@ -32,6 +33,7 @@ const byte SOPLEN = 35;
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
+
 MCP_CAN CAN(10); 
 int vol_index = 15; // default volume index to restore
 
@@ -358,7 +360,7 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
-  //Serial.begin(115200);
+  Serial.begin(115200);
   Serial1.begin(9600);
   //generate sop
   for (int i = 0; i < SOPLEN-1; i++){
@@ -395,6 +397,22 @@ void setup() {
 }
  
 void loop() {
+    if (!startup){
+      unsigned char start_seq[2] = {0,0};
+      //start up sequence
+      for (int i = 0; i< 10; i++){
+        CAN.sendMsgBuf(1056, 0, 2, start_seq);
+        delay(10);
+      }
+      delay(500);
+      Serial.println("before end of start-up seq");
+      unsigned char start_seq2[8] = {32,16,9,8,80,2,32,34};
+      CAN.sendMsgBuf(1504, 0, 8, start_seq2);
+      
+      startup = true;
+    }
+
+  
   init_ainet_processor();
   readCan();
   dispatcher();
