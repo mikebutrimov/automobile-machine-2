@@ -202,12 +202,18 @@ public class BtIOService extends Service {
             if(mCurrentTrack != null) {
                 int position = mCurrentTrack.getInt(PowerampAPI.Track.POS_IN_LIST);
                 currentTrackPosition = position;
+
                 mAMCurrentTrack.setPositionInList(currentTrackPosition);
 
                 byte[] can_40000 = {4,0,0,0,(byte) position};
                 Intent dn40000 = Utils.genereateVhclCmd(0xa4,can_40000,false,1000,false,"");
                 sendBroadcast(dn40000);
 
+
+                //send pre-track no timing data packet
+                byte[] no_pos_data = {(byte) position, (byte)255,(byte)255,0,(byte)128,(byte)128};
+                Intent no_pos_intent = Utils.genereateVhclCmd(0x3a5, no_pos_data,false,1000,false,"");
+                sendBroadcast(no_pos_intent);
 
 
                 int duration = mCurrentTrack.getInt(PowerampAPI.Track.DURATION);

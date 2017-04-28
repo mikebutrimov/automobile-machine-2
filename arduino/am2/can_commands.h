@@ -1,4 +1,4 @@
-const int HEARTBEAT_SIZE = 8;
+const int HEARTBEAT_SIZE = 9;
 
 struct CAN_COMMAND {
   short address;

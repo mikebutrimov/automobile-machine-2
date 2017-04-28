@@ -8,6 +8,7 @@ const int SPI_CS_PIN = 10;
 const int HEARTBEAT_SIZE = 8;
 boolean startup = false;
 boolean track = false;
+int rbyte;
 MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
 struct CAN_COMMAND {
@@ -56,6 +57,18 @@ CAN_COMMAND track_name2[8] = {
 };
 
 
+
+CAN_COMMAND track_name3[7] = {
+
+{123, 8, 0, 0,{16,  43,  20,  79, 0,  19,  32,  32}},  
+{123, 8, 0, 0,{33,  81, 49, 120, 111, 101, 32, 32}},
+{123, 8, 0, 0,{34,  67, 90, 32, 32, 86, 79, 73}}, 
+{123, 8, 0, 0,{35,  65, 67, 75, 32, 77,  97,  110}},
+{123, 8, 0, 0,{36,  117, 32,  67,  105, 98,  112, 32}},  
+{123, 8, 0, 0,{37,  46,  32,  83,  118, 110, 98,  97}},  
+{123, 3, 0, 0,{38,  0,  0}},
+};
+
 unsigned char cd_time[6] = {1, 255, 255, 2, 0,  0};
 
 
@@ -67,9 +80,9 @@ void sendCmd(CAN_COMMAND cmd){
     buffer[i] = cmd.payload[i];
   }
   CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  Serial.print(millis());
-  Serial.print("\t");
-  Serial.println("cmd was sent");
+  //Serial.print(millis());
+  //Serial.print("\t");
+  //Serial.println("cmd was sent");
   delete[] buffer;
 }
 
@@ -107,30 +120,12 @@ void setup()
 unsigned char stmp[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 void loop()
 {
-    if (!startup){
-      unsigned char start_seq[2] = {0,0};
-      //start up sequence
-      for (int i = 0; i< 10; i++){
-        CAN.sendMsgBuf(1056, 0, 2, start_seq);
-        delay(10);
-      }
-      delay(500);
-      Serial.println("before end of start-up seq");
-      unsigned char start_seq2[8] = {32,16,9,8,80,2,32,34};
-      CAN.sendMsgBuf(1504, 0, 8, start_seq2);
-      
-      startup = true;
-    }
-
-  dispatcher();
-
-
-
+ dispatcher();
   if (sec == 60){
       sec = 0;
   }
     
-    if (millis()%1000 == 0){
+    if (millis()%500 == 0){
       sec++;
       cd_time[4] = char(sec);
       //Serial.println(sec);
@@ -138,12 +133,22 @@ void loop()
     }
 
 
-      if ( !track){
-    batch_send(track_name2,7);
-    //batch_send(track_name2,8);
-    Serial.println("track1");
-    track = true;
-  }
+   if (Serial.available()){
+     rbyte = Serial.read();
+
+     if (rbyte == 50){
+      Serial.println("track2");
+      batch_send(track_name2,7);
+     }
+     if (rbyte == 49){
+      Serial.println("track1");
+      batch_send(track_name,7);
+     }
+     if (rbyte == 51){
+      Serial.println("track3");
+      batch_send(track_name3,7);
+     }
+    }
   
   
    
