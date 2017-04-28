@@ -10,12 +10,33 @@ if len(sys.argv) < 2:
 
 
 input_file = sys.argv[1]
-output_file = input_file + ".out.c"
+if (len(sys.argv) == 3):
+    output_file = sys.argv[2] + ".c"
+    output_header = sys.argv[2] + ".h"
+else:
+    output_file = "emulated.c"
+    output_header = "emulated.h"
+
+
+with open (output_header, 'w') as outheader:
+	outheader.write('struct CAN_COMMAND {\n\
+        short address;\n\
+        short bytes;\n\
+        int putInTime;\n\
+        int delayTime;\n\
+        short payload[8];\n\
+        };\n\
+    void emulated();\n')
+
+
+
 
 with open (input_file, 'r') as infile:
     raw_file_list = infile.readlines()
     with open (output_file, 'w') as outfile:
+        outfile.write('#include "'+output_header+'"\n')
         outfile.write('void emulated() {\n')
+        outfile.write('CAN_COMMAND cmd;\n')
         last_read_line = None
         for line in raw_file_list:
             buf = line.strip().split("\t")
@@ -25,7 +46,7 @@ with open (input_file, 'r') as infile:
                 delay = 0    
             if delay != 0:
                 outfile.write('delay ('+str(delay)+');\n')
-            outfile.write('CAN_COMMAND cmd = {'+
+            outfile.write('cmd = {0x'+
                                 buf[1] +
                                 ','+
                                 str(len(buf)-2)+
