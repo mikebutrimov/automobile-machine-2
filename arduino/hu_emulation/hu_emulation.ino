@@ -1,16 +1,14 @@
-// demo: CAN-BUS Shield, send data
 #include <mcp_can.h>
 #include <SPI.h>
 #include "emulated.h"
+#include "canutils.h"
 
-// the cs pin of the version after v1.1 is default to D9
-// v0.9b and v1.0 is default D10
-const int SPI_CS_PIN = 10;
+int SPI_CS_PIN = 10;
+MCP_CAN CAN(SPI_CS_PIN);
 const int HEARTBEAT_SIZE = 8;
 boolean startup = false;
 boolean track = false;
 int rbyte;
-MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
 
 
 
@@ -28,7 +26,6 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
 
 
 CAN_COMMAND track_name[8] = {
-
 {164, 8, 0, 0,{16,  44,  32,  0, 88,  19,  32,  32}},  
 {164, 8, 0, 0,{33,  80, 48, 119, 110, 100, 32, 32}},
 {164, 8, 0, 0,{34,  66, 89, 32, 32, 85, 78, 72}}, 
@@ -64,6 +61,11 @@ CAN_COMMAND track_name3[7] = {
 unsigned char cd_time[6] = {1, 255, 255, 2, 0,  0};
 
 
+
+
+int sec = 0;
+
+
 void sendCmd(CAN_COMMAND cmd){
   int b_count = cmd.bytes;
   byte * buffer = new byte[b_count];
@@ -72,14 +74,8 @@ void sendCmd(CAN_COMMAND cmd){
     buffer[i] = cmd.payload[i];
   }
   CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  //Serial.print(millis());
-  //Serial.print("\t");
-  //Serial.println("cmd was sent");
   delete[] buffer;
 }
-
-int sec = 0;
-
 
 
 void dispatcher(){
