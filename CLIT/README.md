@@ -20,6 +20,7 @@ void emulated() {
   cmd = {0x165,4,0,0,{8,198,0,32}};
   sendCmd(cmd);
   delay (59);
+  }
 ```
 
 where cmd is CAN_COMMAND struct:
