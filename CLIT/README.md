@@ -1,13 +1,15 @@
-##C.L.I.T
+C.L.I.T
+
 Can LIstener / Transmitter
 
 Special tool, used to generate arduino-compitable code.
 As input it takes raw dump of CAN bus, in format: 
+```
 99          131     1       16      0       0       0       32
 |           |       |       |       |       |       |       |
-timestamp   PID     P       A       Y       L       O       A       D(up to 8 bytes)
+timestamp   PID     P       A       Y       L       O       A       D (up to 8 bytes)
 (ms)
-
+```
 
 It converts such input to code like this:
 ```c++
@@ -18,6 +20,7 @@ void emulated() {
   cmd = {0x165,4,0,0,{8,198,0,32}};
   sendCmd(cmd);
   delay (59);
+  }
 ```
 
 where cmd is CAN_COMMAND struct:
