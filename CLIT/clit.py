@@ -8,6 +8,12 @@ if len(sys.argv) < 2:
     exit() 
     
 
+#lists with pids to include in heartbeat
+pids = []
+
+
+
+
 
 input_file = sys.argv[1]
 if (len(sys.argv) == 3):
