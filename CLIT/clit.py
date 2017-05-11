@@ -45,7 +45,7 @@ void emulated() {\n')
         last_read_line = None
         for line in raw_file_list:
             buf = line.strip().split("\t")
-            if buf[1] not in pids: 
+            if pids and buf[1] not in pids: 
                 outfile.write('}\n')
                 exit(0)
             if last_read_line is not None:
