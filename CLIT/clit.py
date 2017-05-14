@@ -9,7 +9,7 @@ if len(sys.argv) < 2:
     
 
 #lists with pids to include in heartbeat
-pids = []
+pids = ['165','1E5','2E5','325','365','3A5','9F','A4']
 
 
 
@@ -45,24 +45,22 @@ void emulated() {\n')
         last_read_line = None
         for line in raw_file_list:
             buf = line.strip().split("\t")
-            if pids and buf[1] not in pids: 
-                outfile.write('}\n')
-                exit(0)
-            if last_read_line is not None:
-                delay = int(buf[0]) - int(last_read_line[0])
-            else:
-                delay = 0    
-            if delay != 0:
-                outfile.write('  delay ('+str(delay)+');\n')
-            outfile.write('  cmd = {0x'+
+            if pids and buf[1] in pids:
+                if last_read_line is not None:
+                    delay = int(buf[0]) - int(last_read_line[0])
+                else:
+                    delay = 0    
+                if delay != 0:
+                    outfile.write('  delay ('+str(delay)+');\n')
+                outfile.write('  cmd = {0x'+
                                 buf[1] +
                                 ','+
                                 str(len(buf)-2)+
                                 ',0,0,{'+
                                 ','.join(buf[2:])+
                                 '}};\n')
-            outfile.write('  sendCmd(cmd);\n')
-            last_read_line = buf
+                outfile.write('  sendCmd(cmd);\n')
+                last_read_line = buf
 
         outfile.write('}\n')
 

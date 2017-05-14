@@ -245,6 +245,13 @@ public class BtIOService extends Service {
                 }
 
                 int can_address = 0xa4;
+                //pre new track packets
+                byte _0x325[] = {0,11,0};
+                byte _0x365[] = {(byte)255,(byte)255,(byte)255,1,0};
+                Intent i0x325 = Utils.genereateVhclCmd(0x325,_0x325,false,1000,false,"");
+                Intent i0x365 = Utils.genereateVhclCmd(0x365,_0x365,false,1000,false,"");
+                sendBroadcast(i0x325);
+                sendBroadcast(i0x365);
                 //rude fisrt string formatting
                 byte msg[] = {16, 44, 32, 0, (byte) 136, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
                 Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
