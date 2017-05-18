@@ -40,6 +40,7 @@ int vol_index = 15; // default volume index to restore
  void(* resetFunc) (void) = 0;
 
 void isr_read_msg(){
+  Serial.println("in isr");
   if (!readyForNext) return;
   noInterrupts();
   //here we start with RISING on SOF but must check it

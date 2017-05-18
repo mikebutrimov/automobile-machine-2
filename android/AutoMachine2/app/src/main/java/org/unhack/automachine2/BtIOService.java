@@ -253,7 +253,7 @@ public class BtIOService extends Service {
                 sendBroadcast(i0x325);
                 sendBroadcast(i0x365);
                 //rude fisrt string formatting
-                byte msg[] = {16, 44, 32, 0, (byte) 88, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
+                byte msg[] = {16, 44, 32, 0, (byte) 152, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
                 Intent trackNameIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 trackNameIntent.putExtra("address", can_address);
                 trackNameIntent.putExtra("repeat", false);
