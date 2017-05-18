@@ -230,11 +230,23 @@ void readOrder(){
     else {
    }
   }
-  while (Serial1.available() < messageLen){
-    }
-  //Serial.println("__________________");
+  
   byte * proto_buf_message = new byte[messageLen];
-  byte received = Serial1.readBytes(proto_buf_message, messageLen);
+
+  int received = 0;
+  continue_read = true;
+  while (continue_read){
+    char byte_readed = Serial1.read();
+    if (byte_readed != -1){
+      proto_buf_message[received] = byte_readed;
+      ++received;
+    }
+    else {}
+    if (received >= messageLen){
+      continue_read = false;
+    }
+  }
+  
   if (received == messageLen){
     //go ahead
     controlMessage message = controlMessage_init_zero;
@@ -244,7 +256,7 @@ void readOrder(){
     status = pb_decode(&stream, controlMessage_fields, &message);
     if (!status){
       Serial.println("Error decoding message");
-      goto EMERGENCY_HALT;
+      //goto EMERGENCY_HALT;
     }
     else {
     for (int i = 0; i< message.can_payload_count; i++){
@@ -272,10 +284,11 @@ void readOrder(){
   }
   }
   else {
-    resetFunc();
-     EMERGENCY_HALT:
-      Serial.println("emergency halt");
-      resetFunc();
+    //resetFunc();
+    Serial.println("wrong packet length");
+    //EMERGENCY_HALT:
+    //Serial.println("emergency halt");
+    //resetFunc();
   }
   delete[] proto_buf_message;
 }
