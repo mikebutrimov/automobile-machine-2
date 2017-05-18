@@ -236,7 +236,7 @@ void readOrder(){
   int received = 0;
   continue_read = true;
   while (continue_read){
-    char byte_readed = Serial1.read();
+    int byte_readed = Serial1.read();
     if (byte_readed != -1){
       proto_buf_message[received] = byte_readed;
       ++received;
