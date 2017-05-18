@@ -25,11 +25,10 @@ CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
 
 
 
-CAN_COMMAND track_name[10] = {
+CAN_COMMAND track_name[9] = {
 {0x325,3,0,0,{0,11,0}},
 {0x365,5,0,0,{10,255,255,1,0}},
 {164, 8, 0, 0,{16,  44,  32,  0, 136,  8,  32,  32}},  
-{0x9F,3,0,0,{48,0,10}},
 {164, 8, 0, 0,{33,  80, 48, 119, 110, 100, 32, 32}},
 {164, 8, 0, 0,{34,  66, 89, 32, 32, 85, 78, 72}}, 
 {164, 8, 0, 0,{35,  65, 67, 75, 32, 77,  97,  110}},
@@ -38,11 +37,10 @@ CAN_COMMAND track_name[10] = {
 {164, 4, 0, 0,{38,  32,  68,  101}},
 };
 
-CAN_COMMAND track_name2[10] = {
+CAN_COMMAND track_name2[9] = {
 {0x325,3,0,0,{0,11,0}},
 {0x365,5,0,0,{10,255,255,1,0}},
 {164, 8, 0, 0,{16,  44,  32,  0, 136,  19,  32,  32}},  
-{0x9F,3,0,0,{48,0,10}},
 {164, 8, 0, 0,{33,  81, 49, 120, 111, 101, 32, 32}},
 {164, 8, 0, 0,{34,  67, 90, 32, 32, 86, 79, 73}}, 
 {164, 8, 0, 0,{35,  65, 67, 75, 32, 77,  97,  110}},
@@ -131,20 +129,20 @@ void loop()
 
     if (rbyte == 49){
       Serial.println("track1");
-      batch_send(track_name,10);
+      batch_send(track_name,9);
     }
     if (rbyte == 50){
       Serial.println("track2");
-      batch_send(track_name2,10);
+      batch_send(track_name2,9);
     }
     if (rbyte == 51){
       Serial.println("track3");
       batch_send(track_name3,7);
     }
-    if (rbyte == 52){
-      Serial.println("emulation");
-      emulated();
-    }
+    //if (rbyte == 52){
+    //  Serial.println("emulation");
+    //  emulated();
+    //}
    }
 }
 

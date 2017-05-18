@@ -253,7 +253,7 @@ public class BtIOService extends Service {
                 sendBroadcast(i0x325);
                 sendBroadcast(i0x365);
                 //rude fisrt string formatting
-                byte msg[] = {16, 44, 32, 0, (byte) 136, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
+                byte msg[] = {16, 44, 32, 0, (byte) 88, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
                 Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
                 cmdUpIntent.putExtra("address", can_address);
                 cmdUpIntent.putExtra("repeat", false);
@@ -263,14 +263,13 @@ public class BtIOService extends Service {
                 cmdUpIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(cmdUpIntent);
 
-                byte _09f_control[] = {48,0,10};
-                Intent _9fintent = Utils.genereateVhclCmd(0x9f,_09f_control,false,1000,false,"");
-                sendBroadcast(_9fintent);
+                /*try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
 
-
-
-
-                    byte[] prefix = {33, 34, 35, 36, 37, 38};
+                byte[] prefix = {33, 34, 35, 36, 37, 38};
                     int j = 2;
                     for (int i = 0; i < 6; i++) {
                         if (i > 4) {
