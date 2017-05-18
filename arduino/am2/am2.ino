@@ -276,6 +276,9 @@ void readOrder(){
         //while (status !=0){
         //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
         //}
+        //cool down can bus shield
+        delay(1);
+        //^^ yes, it looks stupid but it works
         //Serial.println("Message to CAN was send with status: ");
         //Serial.print(status);
         //Serial.println();

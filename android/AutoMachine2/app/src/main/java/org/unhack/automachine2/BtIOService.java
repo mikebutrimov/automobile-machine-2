@@ -254,14 +254,14 @@ public class BtIOService extends Service {
                 sendBroadcast(i0x365);
                 //rude fisrt string formatting
                 byte msg[] = {16, 44, 32, 0, (byte) 88, (byte) position, (byte) artist.charAt(0), (byte) artist.charAt(1)};
-                Intent cmdUpIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
-                cmdUpIntent.putExtra("address", can_address);
-                cmdUpIntent.putExtra("repeat", false);
-                cmdUpIntent.putExtra("interval", 0);
+                Intent trackNameIntent = new Intent(MainActivity.INTENT_FILTER_INPUT_COMMAND);
+                trackNameIntent.putExtra("address", can_address);
+                trackNameIntent.putExtra("repeat", false);
+                trackNameIntent.putExtra("interval", 0);
                 ArrayList payload = new ArrayList();
                 payload.add(msg);
-                cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                sendBroadcast(cmdUpIntent);
+                //trackNameIntent.putParcelableArrayListExtra("payload", payload);
+                //sendBroadcast(trackNameIntent);
 
                 /*try {
                     Thread.sleep(50);
@@ -289,14 +289,17 @@ public class BtIOService extends Service {
                         }
 
 
-                        cmdUpIntent.putExtra("address", can_address);
-                        cmdUpIntent.putExtra("repeat", false);
-                        cmdUpIntent.putExtra("interval", 0);
-                        payload = new ArrayList();
+                        //trackNameIntent.putExtra("address", can_address);
+                        //trackNameIntent.putExtra("repeat", false);
+                        //trackNameIntent.putExtra("interval", 0);
+                        //payload = new ArrayList();
                         payload.add(msg);
-                        cmdUpIntent.putParcelableArrayListExtra("payload", payload);
-                        sendBroadcast(cmdUpIntent);
+                        //trackNameIntent.putParcelableArrayListExtra("payload", payload);
+                        //sendBroadcast(trackNameIntent);
                     }
+
+                trackNameIntent.putParcelableArrayListExtra("payload", payload);
+                sendBroadcast(trackNameIntent);
                 }
 
         }
