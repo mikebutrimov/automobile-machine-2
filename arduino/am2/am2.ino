@@ -9,7 +9,7 @@
 
 
 
-//interrup service routin variables
+//interrup service routine variables
 int counts = 0;
 const int bytes = 11;
 byte byte_val = 0; 
