@@ -5,39 +5,53 @@
 #include <pb_decode.h>
 #include "msg.pb.h"
 #include "ainet.h"
-#include "can_commands.h"
 
 
 
+
+//interrup service routin variables
 int counts = 0;
-byte bits = 0;
-const char BYTES = 8;
-//const int bytes = 11;
-const byte FFBYTES[8] = {255,255,255,255,255,255,255,255};
-long timer = 0;
-byte sop[35];
-
-long last = 0;
-
-byte byte_val = 0;
+const int bytes = 11;
+byte byte_val = 0; 
 byte vals[bytes*8];
 byte byte_vals[bytes];
 bool ack_buffer[8];
-bool ainetInit = false;
-bool ainetAck = false;
-bool startup = false;
 int readyForNext = 1;
-int messageLen = 0;
-const byte PLEN = 33;
-const byte SOPLEN = 35;
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
+//
+
+//control message frame 
+byte sop[35];
+int messageLen = 0; 
+const byte PLEN = 33;  //minimum packet length
+const byte SOPLEN = 35;  //start of packet length
+//
+
+
+
+//CAN variables
+const int HEARTBEAT_SIZE = 2;
+
+struct CAN_COMMAND {
+  short address;
+  short bytes;
+  int putInTime;
+  int delayTime;
+  short payload[8];
+};
+
+CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
+  {997,6,0,500,{0,0,0,0,0,0}}, //buttons zeroing press
+  {357,4,0,100,{200,192,32,32}}, //turn display as in mp3 mode
+};
+//
 
 MCP_CAN CAN(10); 
-int vol_index = 15; // default volume index to restore
 
- void(* resetFunc) (void) = 0;
+int vol_index = 15; // default volume index to restore
+void(* resetFunc) (void) = 0;
 
 void isr_read_msg(){
   Serial.println("in isr");
@@ -74,6 +88,7 @@ void isr_read_msg(){
       byte_val = 0;
     }
   }
+  //we are not ready for reading packet, need to process previous
   readyForNext = 0;
   if (byte_vals[0] == 0x02){
     //we must count 40 micros from the front of last impulse
@@ -92,7 +107,6 @@ void isr_read_msg(){
       ainetAck = true;
     }
   }
-   
   if (readyForNext == 0) {
     delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
     //some commented out code to output last captured packet
@@ -105,9 +119,6 @@ void isr_read_msg(){
   }
   interrupts();
 }
-
-
-
 
 
 //Volume control
@@ -149,62 +160,19 @@ void volDown(){
   }
 }
 
-
 void vUpVdown(unsigned char *can_buf){
   if (can_buf[0] == 4){
-    //volume down
     volDown();
   }
   if (can_buf[0] == 8){
-    //volume up
     volUp();
   }
 }
-
-
 //End of volume control
-
-//aiNet Processor init
-void init_ainet_processor(){
-  if (ainetAck == true){ //start ainet processor init seq.
-    ainetInit = true;
-    ainetAck = false;//we init it only once
-    delay(2000);
-    Serial.println("int seq initiated");
-    sendAiNetCommand(ainet_commands[0],11);    
-    delay(24);
-    sendAiNetCommand(ainet_commands[6],11);
-    delay(65);
-    ainet_commands[12][3] = 0x2a;
-    crc(ainet_commands[12]);
-    sendAiNetCommand(ainet_commands[12],11);
-    delay(90);
-    ainet_commands[7][3] = vol[0];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-    delay(50);
-    sendAiNetCommand(ainet_commands[19],11);
-    delay(50);
-    sendAiNetCommand(ainet_commands[2],11);    
-    delay(60);
-    sendAiNetCommand(ainet_commands[8],11);   
-    delay(30);
-    sendAiNetCommand(ainet_commands[9],11);   
-    //restore volume to mid level
-    delay(5000);
-    Serial.println("Restore volume level");
-    ainet_commands[7][3] = vol[vol_index];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
-  }
-}
-//End of aiNet processor init
-
 
 
 
 //Read and write BT and CAN sections
-
 void readOrder(){
   if (!Serial1.available()) return;
   int zero_count = 0;
@@ -257,41 +225,30 @@ void readOrder(){
     status = pb_decode(&stream, controlMessage_fields, &message);
     if (!status){
       Serial.println("Error decoding message");
-      //goto EMERGENCY_HALT;
     }
     else {
-    for (int i = 0; i< message.can_payload_count; i++){
-      for (int j = 0; j<message.can_payload[i].size ; j++){
-        Serial.print (message.can_payload[i].bytes[j], DEC);
-        Serial.print (" ");
-      }
-      Serial.println();
-    }
-
-    //retransmitt message to can
-    int canId = message.can_address;
-    if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933 || canId == 805){
-      //security if to avoid writing garbage in can bus
       for (int i = 0; i< message.can_payload_count; i++){
-        byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //while (status !=0){
-        //  status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
-        //}
-        //cool down can bus shield
-        delay(1);
-        //^^ yes, it looks stupid but it works
-        //Serial.println("Message to CAN was send with status: ");
-        //Serial.print(status);
-        //Serial.println();
+        for (int j = 0; j<message.can_payload[i].size ; j++){
+          Serial.print (message.can_payload[i].bytes[j], DEC);
+          Serial.print (" ");
+        }
+        Serial.println();
+      }
+      //retransmitt message to can
+      int canId = message.can_address;
+      //security if to avoid writing garbage in can bus
+      if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933 || canId == 805){
+        for (int i = 0; i< message.can_payload_count; i++){
+          byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+          //cool down can bus shield
+          delay(1);
+          //^^ yes, it looks stupid but it works
+        }
       }
     }
-  }
   }
   else {
-    //resetFunc();
     Serial.println("wrong packet length");
-    //EMERGENCY_HALT:
-    //Serial.println("emergency halt");
     //resetFunc();
   }
   delete[] proto_buf_message;
@@ -303,7 +260,6 @@ void readCan(){
   unsigned char can_buf[8]; 
   int canId;
   if(CAN_MSGAVAIL == CAN.checkReceive()){
-   
     CAN.readMsgBuf(&len, can_buf);
     canId = (int) CAN.getCanId();
     if (canId == 0x21f && len != 0){
@@ -325,16 +281,12 @@ void readCan(){
 
       Serial1.write(sop,SOPLEN);
       Serial1.write(buffer,stream.bytes_written);
-      //Serial.print("Can address  ");
-      //Serial.print(canId, DEC);
-      //Serial.print("  Bytes written:  ");
-      //Serial.println(stream.bytes_written, DEC);
     }
   }
 }
 //End of read and write BT and CAN Sections
 
-//some can heartbeat tools
+//some can tools
 void sendCmd(CAN_COMMAND cmd){
   int b_count = cmd.bytes;
   byte * buffer = new byte[b_count];
@@ -343,14 +295,6 @@ void sendCmd(CAN_COMMAND cmd){
     buffer[i] = cmd.payload[i];
   }
   byte status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  //while (status !=0){
-  //  status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
-  //}
-  //Serial.print(millis());
-  //Serial.print("\t");
-  //Serial.println("cmd was sent with status: ");
-  //Serial.print(status);
-  //Serial.println();
   delete[] buffer;
 }
 
@@ -396,7 +340,6 @@ void setup() {
     }
   }
 
-  //commented out due we are not using can part now
   START_INIT:
 
     if(CAN_OK == CAN.begin(CAN_125KBPS))                   
@@ -414,22 +357,6 @@ void setup() {
 }
  
 void loop() {
-    if (!startup){
-      unsigned char start_seq[2] = {0,0};
-      //start up sequence
-      for (int i = 0; i< 10; i++){
-        CAN.sendMsgBuf(1056, 0, 2, start_seq);
-        delay(10);
-      }
-      delay(500);
-      Serial.println("before end of start-up seq");
-      unsigned char start_seq2[8] = {32,16,9,8,80,2,32,34};
-      CAN.sendMsgBuf(1504, 0, 8, start_seq2);
-      
-      startup = true;
-    }
-
-  
   init_ainet_processor();
   readCan();
   dispatcher();
