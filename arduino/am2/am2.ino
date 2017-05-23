@@ -52,13 +52,12 @@ int vol_index = 15; // default volume index to restore
 void(* resetFunc) (void) = 0;
 
 void isr_read_msg(){
-  //Serial.println("in isr");
-  if (!readyForNext) return;
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
   }
   if (counts<SOF_THRESHOLD){//need to do some finetuning
+    delayMicroseconds(192);
     return;
   }
   //SOF ends with LOW reading. wait for HIGH again and count it
@@ -66,9 +65,7 @@ void isr_read_msg(){
     counts = 0;
     while (digitalRead2(AINETIN) == LOW && counts < BRAKE){
       counts++;
-      //if (counts > BRAKE) return;
     }
-    
     counts = 0;
     while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ){
       counts++;
@@ -85,11 +82,7 @@ void isr_read_msg(){
       byte_val = 0;
     }
   }
-
   
-  //we are not ready for reading packet, need to process previous
-  
-  readyForNext = 0;
   if (byte_vals[0] == 0x02){
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit 
@@ -107,25 +100,20 @@ void isr_read_msg(){
       ainetAck = true;
     }
   }
-  if (readyForNext == 0) {
-    delayMicroseconds(192); //sleep and do nothing in purpose not to answer on ack
-    //some commented out code to output last captured packet
-    for (int i = 0; i< bytes; i++){
-      Serial.print(byte_vals[i],HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
-    readyForNext = 1;
-  }
 
-  
+  //some commented out code to output last captured packet
+  for (int i = 0; i< bytes; i++){
+    Serial.print(byte_vals[i],HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
 }
 
 
 //Volume control
 void volUp(){
   if ((vol_index+1) < 36){
-    //Serial.println("in Vup");
+    Serial.println("in Vup");
     //Serial.println(vol[vol_index]);
     //Serial.println(vol_index);
     vol_index = vol_index + 1;
@@ -321,6 +309,7 @@ void setup() {
   //init ainet pins
   pinMode2(AINETIN, INPUT); 
   pinMode2(AINETOUT, OUTPUT);
+  pinMode2(7, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
