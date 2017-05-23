@@ -49,13 +49,15 @@ it includes:
 ##Dependencies:
  - Fast digital I/O for Arduino 
 (https://www.codeproject.com/Articles/732646/Fast-digital-I-O-for-Arduino)
+You can find dio2.zip in dependencies folder. Unzip it, read readme and 
+use carefully. 
 
  - CAN BUS Shield
  (https://github.com/Seeed-Studio/CAN_BUS_Shield )
 
 
-You can find dio2.zip in dependencies folder. Unzip it, read readme and 
-use carefully. 
+
+
 I will work on some docs and will improve comments in the code during development.
 
 
