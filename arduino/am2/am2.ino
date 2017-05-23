@@ -7,8 +7,6 @@
 #include "ainet.h"
 
 
-
-
 //interrup service routine variables
 int counts = 0;
 const int bytes = 11;
@@ -54,9 +52,8 @@ int vol_index = 15; // default volume index to restore
 void(* resetFunc) (void) = 0;
 
 void isr_read_msg(){
-  Serial.println("in isr");
+  //Serial.println("in isr");
   if (!readyForNext) return;
-  noInterrupts();
   //here we start with RISING on SOF but must check it
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE){
     counts++;
@@ -67,9 +64,9 @@ void isr_read_msg(){
   //SOF ends with LOW reading. wait for HIGH again and count it
   for (int i = 0; i< bytes*8; i++){
     counts = 0;
-    while (digitalRead2(AINETIN) == LOW){
+    while (digitalRead2(AINETIN) == LOW && counts < BRAKE){
       counts++;
-      if (counts > BRAKE) return;
+      //if (counts > BRAKE) return;
     }
     
     counts = 0;
@@ -88,7 +85,10 @@ void isr_read_msg(){
       byte_val = 0;
     }
   }
+
+  
   //we are not ready for reading packet, need to process previous
+  
   readyForNext = 0;
   if (byte_vals[0] == 0x02){
     //we must count 40 micros from the front of last impulse
@@ -117,16 +117,17 @@ void isr_read_msg(){
     Serial.println();
     readyForNext = 1;
   }
-  interrupts();
+
+  
 }
 
 
 //Volume control
 void volUp(){
   if ((vol_index+1) < 36){
-    Serial.println("in Vup");
-    Serial.println(vol[vol_index]);
-    Serial.println(vol_index);
+    //Serial.println("in Vup");
+    //Serial.println(vol[vol_index]);
+    //Serial.println(vol_index);
     vol_index = vol_index + 1;
     ainet_commands[7][3] = vol[vol_index];
     crc(ainet_commands[7]);
@@ -144,8 +145,8 @@ void volUp(){
 void volDown(){
   if ((vol_index-1) >= 0){
     Serial.println("in VDown");
-    Serial.println(vol[vol_index]);
-    Serial.println(vol_index);
+    //Serial.println(vol[vol_index]);
+    //Serial.println(vol_index);
     vol_index = vol_index - 1;
     ainet_commands[7][3] = vol[vol_index];
     crc(ainet_commands[7]);
@@ -225,6 +226,8 @@ void readOrder(){
     status = pb_decode(&stream, controlMessage_fields, &message);
     if (!status){
       Serial.println("Error decoding message");
+      delete[] proto_buf_message;
+      return;
     }
     else {
       for (int i = 0; i< message.can_payload_count; i++){
@@ -278,7 +281,6 @@ void readCan(){
       message.can_payload_count = 1;
       status = pb_encode(&stream, controlMessage_fields, &message);
       sop[SOPLEN-1] = stream.bytes_written;
-
       Serial1.write(sop,SOPLEN);
       Serial1.write(buffer,stream.bytes_written);
     }
@@ -358,9 +360,24 @@ void setup() {
  
 void loop() {
   init_ainet_processor();
-  readCan();
   dispatcher();
   readOrder(); 
-  dispatcher();
+  readCan();
+  
+  /*
+  if (Serial.available()){
+    int rbyte = Serial.read();
+
+    if (rbyte == 49){
+      Serial.println("sub -1");
+      sendAiNetCommand(ainet_commands[14],11);   
+     
+    }
+    if (rbyte == 50){
+      Serial.println("sub +1");
+      sendAiNetCommand(ainet_commands[13],11);   
+    }
+  }
+  */
 
 }

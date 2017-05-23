@@ -75,6 +75,7 @@ void fastSend(bool* packet, int packet_size, bool ack){
     digitalWrite2(AINETOUT, LOW);
     delayMicroseconds(16);
   }
+  
   for (int i = 0; i< packet_size; i++){
     if (packet[i] == 0){
       digitalWrite2(AINETOUT, HIGH);
@@ -105,7 +106,7 @@ void sendAiNetCommand(byte * packet, int packet_size){
       }
     }
   }
-  fastSend(fast_byte_buffer, packet_size*8, 0);
+  fastSend(fast_byte_buffer, packet_size*8, false);
 }
 
 
