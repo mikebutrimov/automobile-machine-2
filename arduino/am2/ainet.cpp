@@ -90,6 +90,7 @@ void fastSend(bool* packet, int packet_size, bool ack){
       delayMicroseconds(18);
     }
   }
+  delayMicroseconds(252);
   interrupts();
 }
 
@@ -107,6 +108,7 @@ void sendAiNetCommand(byte * packet, int packet_size){
     }
   }
   fastSend(fast_byte_buffer, packet_size*8, false);
+  
 }
 
 
