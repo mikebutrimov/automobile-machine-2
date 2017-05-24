@@ -260,14 +260,6 @@ public class BtIOService extends Service {
                 trackNameIntent.putExtra("interval", 0);
                 ArrayList payload = new ArrayList();
                 payload.add(msg);
-                //trackNameIntent.putParcelableArrayListExtra("payload", payload);
-                //sendBroadcast(trackNameIntent);
-
-                /*try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
 
                 byte[] prefix = {33, 34, 35, 36, 37, 38};
                     int j = 2;
@@ -287,17 +279,8 @@ public class BtIOService extends Service {
                                 j++;
                             }
                         }
-
-
-                        //trackNameIntent.putExtra("address", can_address);
-                        //trackNameIntent.putExtra("repeat", false);
-                        //trackNameIntent.putExtra("interval", 0);
-                        //payload = new ArrayList();
                         payload.add(msg);
-                        //trackNameIntent.putParcelableArrayListExtra("payload", payload);
-                        //sendBroadcast(trackNameIntent);
                     }
-
                 trackNameIntent.putParcelableArrayListExtra("payload", payload);
                 sendBroadcast(trackNameIntent);
                 }
