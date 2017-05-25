@@ -95,7 +95,7 @@ void isr_read_msg() {
       ainetAck = true;
     }
   }
-
+  delayMicroseconds(192);
   //some commented out code to output last captured packet
   for (int i = 0; i< bytes; i++) {
     Serial.print(byte_vals[i],HEX);
