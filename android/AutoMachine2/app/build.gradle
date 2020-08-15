@@ -19,9 +19,9 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile project(':protobuf-java-3.0.0')
-    compile project(':poweramp_api_lib')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:24.2.0'
+    implementation project(':protobuf-java-3.0.0')
+    implementation project(':poweramp_api_lib')
 }
