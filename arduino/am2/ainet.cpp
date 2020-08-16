@@ -91,7 +91,6 @@ void fastSend(bool* packet, int packet_size, bool ack) {
       delayMicroseconds(18);
     }
   }
-  delayMicroseconds(252);
   interrupts();
 }
 

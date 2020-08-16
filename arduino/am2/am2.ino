@@ -95,7 +95,7 @@ void isr_read_msg() {
       ainetAck = true;
     }
   }
-  delayMicroseconds(192);
+  //delayMicroseconds(192);
   //some commented out code to output last captured packet
   for (int i = 0; i< bytes; i++) {
     Serial.print(byte_vals[i],HEX);
@@ -194,6 +194,7 @@ void readOrder() {
     }
   }
 
+
   if (received == messageLen) {
     //go ahead
     controlMessage message = controlMessage_init_zero;
@@ -204,15 +205,16 @@ void readOrder() {
     if (!status) {
       Serial.println("Error decoding message");
       delete[] proto_buf_message;
+      digitalWrite2(6, LOW);
       return;
     }
     else {
       for (int i = 0; i< message.can_payload_count; i++) {
         for (int j = 0; j<message.can_payload[i].size ; j++) {
-          Serial.print (message.can_payload[i].bytes[j], DEC);
-          Serial.print (" ");
+          //Serial.print (message.can_payload[i].bytes[j], DEC);
+          //Serial.print (" ");
         }
-        Serial.println();
+        //Serial.println();
       }
       //retransmitt message to can
       int canId = message.can_address;
@@ -297,7 +299,6 @@ void setup() {
   //init ainet pins
   pinMode2(AINETIN, INPUT);
   pinMode2(AINETOUT, OUTPUT);
-  pinMode2(7, OUTPUT);
   //prepare uranus;
   attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
