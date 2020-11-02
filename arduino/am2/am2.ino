@@ -6,18 +6,24 @@
 #include "msg.pb.h"
 #include "ainet.h"
 
+#define DEBUG true
+
 
 //interrupt service routine variables
 int counts = 0;
 const int bytes = 11;
 byte byte_val = 0;
-byte vals[bytes*8];
+byte vals[bytes * 8];
 byte byte_vals[bytes];
 bool ack_buffer[8];
 int readyForNext = 1;
 const int BITVAL_THRESHOLD_HIGH = 6;
 const int SOF_THRESHOLD = 15;
 const int BRAKE = 10000;
+char buf[2] = {'0', '0'};
+int ainet_bytes = 0;
+
+bool isAinetInited = false;
 
 //control message frame
 byte sop[35];
@@ -37,8 +43,8 @@ struct CAN_COMMAND {
 };
 
 CAN_COMMAND heartbeat[HEARTBEAT_SIZE] = {
-  {997,6,0,500,{0,0,0,0,0,0}}, //buttons zeroing press
-  {357,4,0,100,{200,192,32,32}}, //turn display on as in mp3 mode
+  {997, 6, 0, 500, {0, 0, 0, 0, 0, 0}}, //buttons zeroing press
+  {357, 4, 0, 100, {200, 192, 32, 32}}, //turn display on as in mp3 mode
 };
 
 MCP_CAN CAN(10); //Can bus shield on spi pin 10
@@ -50,20 +56,20 @@ void isr_read_msg() {
   while (digitalRead2(AINETIN) == HIGH  && counts < BRAKE) {
     counts++;
   }
-  if (counts<SOF_THRESHOLD) {
+  if (counts < SOF_THRESHOLD) {
     //we got an ack of someone's packet. ignore it
     delayMicroseconds(192);
     return;
   }
   //SOF ends with LOW reading. wait for HIGH again and count it
-  for (int i = 0; i< bytes*8; i++) {
+  for (int i = 0; i < bytes * 8; i++) {
     counts = 0;
     while (digitalRead2(AINETIN) == LOW && counts < BRAKE) {
       counts++;
     }
     counts = 0;
     while (digitalRead2(AINETIN) == HIGH && counts < BRAKE ) {
-      counts++;
+      counts++; 
     }
     if (counts < BITVAL_THRESHOLD_HIGH) {
       vals[i] = 1;
@@ -71,9 +77,9 @@ void isr_read_msg() {
     else {
       vals[i] = 0;
     }
-    byte_val = (byte_val<<1)|vals[i];
-    if (i % 8 ==7) {
-      byte_vals[i/8] = byte_val;
+    byte_val = (byte_val << 1) | vals[i];
+    if (i % 8 == 7) {
+      byte_vals[i / 8] = byte_val;
       byte_val = 0;
     }
   }
@@ -81,14 +87,14 @@ void isr_read_msg() {
   if (byte_vals[0] == 0x02) {
     //we must count 40 micros from the front of last impulse
     //so it depends on value of last bit
-    if (vals[(bytes*8)-1] == 0) {
+    if (vals[(bytes * 8) - 1] == 0) {
       delayMicroseconds(23);
     }
     else {
       delayMicroseconds(31);
     }
     //send ack
-    fastSend(ack_buffer,8,1);
+    fastSend(ack_buffer, 8, 1);
     //start init seq. by setting ainetAck to true
     //this means that we get request from processor to headunit (from 0x40 to 0x02)
     if (byte_vals[1] == 0x40 && byte_vals[2] == 0x90 && byte_vals[3] == 0x67) {
@@ -97,42 +103,55 @@ void isr_read_msg() {
   }
 
   //some commented out code to output last captured packet
-  for (int i = 0; i< bytes; i++) {
-    Serial.print(byte_vals[i],HEX);
-    Serial.print(" ");
+  if (DEBUG) {
+    for (int i = 0; i < bytes; i++) {
+      Serial.print(byte_vals[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
   }
-  Serial.println();
 }
 
 
 //Volume control
 void volUp() {
-  if ((vol_index+1) < 36) {
+  if ((vol_index + 1) < 36) {
     vol_index = vol_index + 1;
-    ainet_commands[7][3] = vol[vol_index];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
+    //ainet_commands[7][3] = vol[vol_index];
+    //crc(ainet_commands[7]);
+    //sendAiNetCommand(ainet_commands[7], 11);
+    String s_index = String(vol_index);
+    if (DEBUG) {
+      Serial.println("Setting volume level to: " + s_index);
+    }
+    Serial2.println("v"+s_index);
     byte buf[1];
-    buf[0]= (byte) vol_index;
+    buf[0] = (byte) vol_index;
     if (vol_index < 32) {
       byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-      buf[0] = (byte) (224+vol_index);
+      buf[0] = (byte) (224 + vol_index);
       CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
   }
 }
 
 void volDown() {
-  if ((vol_index-1) >= 0) {
+  if ((vol_index - 1) >= 0) {
     vol_index = vol_index - 1;
-    ainet_commands[7][3] = vol[vol_index];
-    crc(ainet_commands[7]);
-    sendAiNetCommand(ainet_commands[7],11);
+    //ainet_commands[7][3] = vol[vol_index];
+    //crc(ainet_commands[7]);
+    //sendAiNetCommand(ainet_commands[7], 11);
+
+    String s_index = String(vol_index);
+    if (DEBUG) {
+      Serial.println("Setting volume level to: " + s_index);
+    }
+    Serial2.println("v"+s_index);
     byte buf[1];
-    buf[0]= (byte) vol_index;
+    buf[0] = (byte) vol_index;
     if (vol_index < 32) {
       byte status = CAN.sendMsgBuf(0x1a5, 0, 1, buf);
-      buf[0] = (byte)(224+vol_index);
+      buf[0] = (byte)(224 + vol_index);
       CAN.sendMsgBuf(0x1a5, 0, 1, buf);
     }
   }
@@ -202,24 +221,28 @@ void readOrder() {
     bool status;
     status = pb_decode(&stream, controlMessage_fields, &message);
     if (!status) {
-      Serial.println("Error decoding message");
+      if (DEBUG) {
+        Serial.println("Error decoding message");
+      }
       delete[] proto_buf_message;
       return;
     }
     else {
-      for (int i = 0; i< message.can_payload_count; i++) {
-        for (int j = 0; j<message.can_payload[i].size ; j++) {
-          Serial.print (message.can_payload[i].bytes[j], DEC);
-          Serial.print (" ");
+      if (DEBUG) {
+        for (int i = 0; i < message.can_payload_count; i++) {
+          for (int j = 0; j < message.can_payload[i].size ; j++) {
+            Serial.print (message.can_payload[i].bytes[j], DEC);
+            Serial.print (" ");
+          }
+          Serial.println();
         }
-        Serial.println();
       }
       //retransmitt message to can
       int canId = message.can_address;
       //security if to avoid writing garbage in can bus
       if (canId == 0x165 || canId == 0x3e5 || canId == 0x21f || canId == 0xa4 || canId == 933 || canId == 805) {
-        for (int i = 0; i< message.can_payload_count; i++) {
-          byte status = CAN.sendMsgBuf(canId,0,message.can_payload[i].size,message.can_payload[i].bytes);
+        for (int i = 0; i < message.can_payload_count; i++) {
+          byte status = CAN.sendMsgBuf(canId, 0, message.can_payload[i].size, message.can_payload[i].bytes);
           //cool down can bus shield
           delay(1);
           //^^ yes, it looks stupid but it works
@@ -228,7 +251,9 @@ void readOrder() {
     }
   }
   else {
-    Serial.println("wrong packet length");
+    if (DEBUG) {
+      Serial.println("wrong packet length");
+    }
   }
   delete[] proto_buf_message;
 }
@@ -238,9 +263,10 @@ void readCan() {
   unsigned char len = 0;
   unsigned char can_buf[8];
   int canId;
-  if(CAN_MSGAVAIL == CAN.checkReceive()) {
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
     CAN.readMsgBuf(&len, can_buf);
     canId = (int) CAN.getCanId();
+    Serial.println("Get can message from: "+ String(canId));
     if (canId == 0x21f && len != 0) {
       //process volum up and down buttons
       vUpVdown(can_buf);
@@ -256,9 +282,9 @@ void readCan() {
       }
       message.can_payload_count = 1;
       status = pb_encode(&stream, controlMessage_fields, &message);
-      sop[SOPLEN-1] = stream.bytes_written;
-      Serial1.write(sop,SOPLEN);
-      Serial1.write(buffer,stream.bytes_written);
+      sop[SOPLEN - 1] = stream.bytes_written;
+      Serial1.write(sop, SOPLEN);
+      Serial1.write(buffer, stream.bytes_written);
     }
   }
 }
@@ -269,15 +295,15 @@ void sendCmd(CAN_COMMAND cmd) {
   int b_count = cmd.bytes;
   byte * buffer = new byte[b_count];
   //copy useful bytes from command to buffer to send it in CAN
-  for (int i = 0; i< b_count; i++) {
+  for (int i = 0; i < b_count; i++) {
     buffer[i] = cmd.payload[i];
   }
-  byte status = CAN.sendMsgBuf(cmd.address, 0, b_count,buffer);
+  byte status = CAN.sendMsgBuf(cmd.address, 0, b_count, buffer);
   delete[] buffer;
 }
 
 void dispatcher() {
-  for (int i = 0; i< HEARTBEAT_SIZE; i++) {
+  for (int i = 0; i < HEARTBEAT_SIZE; i++) {
     if ( ((int)millis() - heartbeat[i].delayTime - heartbeat[i].putInTime) >= 0) {
       sendCmd(heartbeat[i]);
       heartbeat[i].putInTime = millis();
@@ -286,7 +312,7 @@ void dispatcher() {
 }
 
 void batch_send(CAN_COMMAND * cmds, int len) {
-  for (int i = 0; i< len; i++) {
+  for (int i = 0; i < len; i++) {
     sendCmd(cmds[i]);
   }
 }
@@ -299,19 +325,20 @@ void setup() {
   pinMode2(AINETOUT, OUTPUT);
   pinMode2(7, OUTPUT);
   //prepare uranus;
-  attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
+  //attachInterrupt(digitalPinToInterrupt(AINETIN), isr_read_msg, RISING);
   Serial.begin(115200);
   Serial1.begin(9600);
+  Serial2.begin(115200);
   //generate sop
-  for (int i = 0; i < SOPLEN-1; i++) {
+  for (int i = 0; i < SOPLEN - 1; i++) {
     sop[i] = 0;
   }
-  sop[SOPLEN-1] = PLEN;
+  sop[SOPLEN - 1] = PLEN;
   //generate ainet ack buffer
   byte b = 0x02;
-  for (j=0; j<8; j++) {
-    type=(b & (1 << (7-j))) >> (7-j);
-    if (type==0) {
+  for (j = 0; j < 8; j++) {
+    type = (b & (1 << (7 - j))) >> (7 - j);
+    if (type == 0) {
       ack_buffer[j] = 0;
     }
     else {
@@ -319,9 +346,18 @@ void setup() {
     }
   }
 
+  //if (DEBUG) {
+  //  Serial.println("Sending init to nano");
+  //}
+  //Serial2.println("y");
+  //Serial2.println("y,h3,h2,h1");
+
+  serial2output();
+  
+
 START_INIT:
 
-  if(CAN_OK == CAN.begin(CAN_125KBPS))
+  if (CAN_OK == CAN.begin(CAN_125KBPS))
   {
     Serial.println("CAN BUS Shield init ok!");
   }
@@ -333,11 +369,102 @@ START_INIT:
     goto START_INIT;
   }
 
+
+  
+
 }
 
+void test(){
+  if (!Serial.available()) return;
+  char buf[3] = {0,0,0};
+  int i = 0;
+  while (Serial.available() && i<3) {
+    buf[i] = Serial.read(); 
+    i++;
+  }
+  for (i = 0; i< 3; i++ ){
+    if (buf[0] != 0) {
+      Serial2.print(buf[i]);
+    }
+  }
+  Serial2.println();
+}
+
+void serial2output() {
+  if (!Serial2.available()) return;
+  if (Serial2.available() > 0) {
+    Serial.print("Nano: ");
+  }
+  
+  while (Serial2.available() > 0) {
+    char b = Serial2.read();
+    Serial.print(b);
+  }
+  Serial.println("");
+  Serial.flush();
+  Serial2.flush();
+}
+
+
+void serialDispatcher() {
+  if (Serial2.available()) {
+    serial2output();
+  }
+}
+
+
+void initAinet() {
+  if (isAinetInited == false) {
+    Serial.println("Start initing ainet");
+   
+    Serial2.println("h1");
+    delay(500);
+    Serial2.println("h2");
+    delay(500);
+    Serial2.println("h3");
+    delay(500);
+    Serial2.println("i4");
+    delay(3000);
+    Serial2.println("v10");
+    isAinetInited = true;
+    Serial.println("Ainet inited probably");
+
+    
+  }
+}
+
+
+void serialConnect() {
+  while(Serial.available() > 0) {
+    Serial2.print((char)Serial.read());
+  }
+
+
+ 
+  while(Serial2.available() > 0) {
+    buf[ainet_bytes%2] = Serial2.read();
+    Serial.print(buf[ainet_bytes%2]);    
+    ainet_bytes++;
+  }
+
+
+
+
+  if ((char)buf[0] == 'P' && (char)buf[1] == 'U') {
+    Serial.println('Start initing ainet on UP status');
+    initAinet();
+    ainet_bytes = 0;
+  }
+
+
+}
+
+
 void loop() {
-  init_ainet_processor();
+  //init_ainet_processor();
   dispatcher();
   readOrder();
   readCan();
+  serialConnect();
+  //serialDispatcher();
 }
